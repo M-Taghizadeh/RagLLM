@@ -54,8 +54,49 @@ RagBot/
 cd RagBot\backend
 python -m venv venv
 .\venv\Scripts\activate
+```
+
+### GPU Setup (PyTorch + CUDA)
+
+`torch` is intentionally **not** listed in `requirements.txt`, since the plain PyPI build is CPU-only and would silently override a GPU-enabled install. Install it manually first, before the rest of the dependencies.
+
+**Check your driver's CUDA version:**
+
+```powershell
+nvidia-smi
+```
+
+The top-right of the output shows something like `CUDA Version: 12.x` — this is the maximum CUDA version your driver supports.
+
+**Install the CUDA build matching your driver** (example for CUDA 12.1):
+
+```powershell
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+If `nvidia-smi` reports CUDA 11.8 instead, use:
+
+```powershell
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+**Verify GPU is detected:**
+
+```powershell
+python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
+```
+
+A successful setup prints `True` followed by your GPU's name.
+
+> **No NVIDIA GPU?** Skip this section — `sentence-transformers` will install a CPU-only `torch` automatically as a dependency in the next step.
+
+### Install the Remaining Dependencies
+
+```powershell
 pip install -r requirements.txt
 ```
+
+`sentence-transformers` will detect the `torch` build already installed (GPU or CPU) and use it as-is — no separate configuration is needed for BGE-M3 to run on GPU.
 
 ---
 
