@@ -14,14 +14,7 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 
 ---
 
-## Screenshots
-
-<!--
-NOTE: This gallery uses <details>/<summary> accordion elements, which GitHub
-natively supports and renders as clickable, expandable/collapsible blocks —
-no CSS or JavaScript required. Click a screenshot's title to expand it and
-reveal the image; click again to collapse it.
--->
+## LLM: RAG Chat Bot
 
 <div align="center">
 
