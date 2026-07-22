@@ -1,0 +1,23 @@
+# Python
+**/venv/
+**/__pycache__/
+*.pyc
+.Python
+
+# Runtime data
+backend/faiss_db/
+backend/ragbot.db
+backend/tmp_test/
+*.db
+
+# Models (large weights — download separately)
+models/bge-m3/
+models/e5/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+.env
