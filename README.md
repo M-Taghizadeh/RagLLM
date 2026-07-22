@@ -25,15 +25,15 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 </details>
 
 <details>
-<summary><b>ChatBot on PDFs files with hybrid RAG</b></summary>
+<summary><b>Ranked Retrieval and Create Vector Database</b></summary>
 <br>
-<img src="docs/2.png" alt="ChatBot Oon PDFs Files with Hybrid RAG" width="720">
+<img src="docs/2.png" alt="Ranked Retrieval and Create Vector Database" width="720">
 </details>
 
 <details>
-<summary><b>Ranked Retrieval and Create Vector Database</b></summary>
+<summary><b>RChatBot Oon PDFs Files with Hybrid RAG</b></summary>
 <br>
-<img src="docs/3.png" alt="Ranked Retrieval and Create Vector Database" width="720">
+<img src="docs/3.png" alt="ChatBot Oon PDFs Files with Hybrid RAG" width="720">
 </details>
 
 <details>
