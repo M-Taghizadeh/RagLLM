@@ -1,0 +1,32 @@
+# ── Web framework ──────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+
+# ── LangChain stack ─────────────────────────────
+langchain
+langchain-core
+langchain-community
+langchain-ollama
+langchain-text-splitters
+
+# ── Vector DB + hybrid retrieval ────────────────
+faiss-cpu
+rank-bm25
+
+# ── Embeddings (BGE-M3 via sentence-transformers)
+sentence-transformers
+torch
+
+# ── PDF loading ─────────────────────────────────
+pypdf
+
+# ── Web crawling / search ───────────────────────
+requests
+beautifulsoup4
+ddgs
+feedparser
+lxml
+
+# ── Model download helper ───────────────────────
+huggingface-hub
