@@ -19,7 +19,7 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 <div align="center">
 
 <details open>
-<summary><b>Rag LLM Bot</b></summary>
+<summary><b>Rag Bot</b></summary>
 <br>
 <img src="docs/1.png" alt="Rag LLM Bot" width="720">
 </details>
