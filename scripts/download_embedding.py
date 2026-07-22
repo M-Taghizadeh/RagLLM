@@ -19,7 +19,7 @@ def main() -> int:
     try:
         from huggingface_hub import snapshot_download
     except ImportError:
-        print("huggingface-hub نصب نیست. اجرا کنید:")
+        print("huggingface-hub is not installed. Run:")
         print("  pip install huggingface-hub")
         return 1
 
