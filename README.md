@@ -37,9 +37,9 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 </details>
 
 <details>
-<summary><b>ChatBo on web article</b></summary>
+<summary><b>ChatBot on web article</b></summary>
 <br>
-<img src="docs/4.png" alt="ChatBo on web article" width="720">
+<img src="docs/4.png" alt="ChatBot on web article" width="720">
 </details>
 
 <details>
