@@ -14,6 +14,159 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 
 ---
 
+## Screenshots
+
+<!--
+NOTE: This gallery uses a pure-CSS (no JavaScript) radio-input technique so
+clicking the arrows/dots moves to the next/previous image. GitHub strips
+<style> tags from rendered README files, so this gallery will only be
+interactive when the file is rendered by something that keeps raw HTML/CSS
+(e.g. VS Code Markdown preview, mkdocs, docsify, pandoc, or opened directly
+in a browser). On GitHub itself it will just show as plain text/broken.
+-->
+
+<div align="center">
+
+<div class="ragbot-gallery">
+  <input type="radio" name="ragbot-slide" id="rb-s1" checked>
+  <input type="radio" name="ragbot-slide" id="rb-s2">
+  <input type="radio" name="ragbot-slide" id="rb-s3">
+  <input type="radio" name="ragbot-slide" id="rb-s4">
+  <input type="radio" name="ragbot-slide" id="rb-s5">
+
+  <div class="ragbot-slides">
+    <div class="ragbot-slide slide1"><img src="docs/1.png" alt="Screenshot 1"></div>
+    <div class="ragbot-slide slide2"><img src="docs/2.png" alt="Screenshot 2"></div>
+    <div class="ragbot-slide slide3"><img src="docs/3.png" alt="Screenshot 3"></div>
+    <div class="ragbot-slide slide4"><img src="docs/4.png" alt="Screenshot 4"></div>
+    <div class="ragbot-slide slide5"><img src="docs/5.png" alt="Screenshot 5"></div>
+  </div>
+
+  <label class="ragbot-prev" for="rb-s5" id="p1">‹</label>
+  <label class="ragbot-prev" for="rb-s1" id="p2">‹</label>
+  <label class="ragbot-prev" for="rb-s2" id="p3">‹</label>
+  <label class="ragbot-prev" for="rb-s3" id="p4">‹</label>
+  <label class="ragbot-prev" for="rb-s4" id="p5">‹</label>
+
+  <label class="ragbot-next" for="rb-s2" id="n1">›</label>
+  <label class="ragbot-next" for="rb-s3" id="n2">›</label>
+  <label class="ragbot-next" for="rb-s4" id="n3">›</label>
+  <label class="ragbot-next" for="rb-s5" id="n4">›</label>
+  <label class="ragbot-next" for="rb-s1" id="n5">›</label>
+
+  <div class="ragbot-dots">
+    <label for="rb-s1"></label>
+    <label for="rb-s2"></label>
+    <label for="rb-s3"></label>
+    <label for="rb-s4"></label>
+    <label for="rb-s5"></label>
+  </div>
+</div>
+
+</div>
+
+<style>
+.ragbot-gallery {
+  position: relative;
+  max-width: 720px;
+  margin: 20px auto;
+  font-family: inherit;
+}
+.ragbot-gallery input { display: none; }
+
+.ragbot-slides {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+}
+.ragbot-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: 0;
+  transition: opacity .45s ease;
+}
+.ragbot-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0d0d0d;
+}
+
+.ragbot-prev, .ragbot-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.6rem;
+  color: #fff;
+  background: rgba(0,0,0,.45);
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 50%;
+  z-index: 2;
+}
+.ragbot-prev:hover, .ragbot-next:hover { background: rgba(0,0,0,.7); }
+.ragbot-prev { left: 10px; }
+.ragbot-next { right: 10px; }
+
+.ragbot-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+}
+.ragbot-dots label {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.5);
+  cursor: pointer;
+  transition: background .3s ease;
+}
+
+/* Show the active slide */
+#rb-s1:checked ~ .ragbot-slides .slide1,
+#rb-s2:checked ~ .ragbot-slides .slide2,
+#rb-s3:checked ~ .ragbot-slides .slide3,
+#rb-s4:checked ~ .ragbot-slides .slide4,
+#rb-s5:checked ~ .ragbot-slides .slide5 {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Show the matching prev/next arrows for the active slide */
+#rb-s1:checked ~ #p1, #rb-s1:checked ~ #n1,
+#rb-s2:checked ~ #p2, #rb-s2:checked ~ #n2,
+#rb-s3:checked ~ #p3, #rb-s3:checked ~ #n3,
+#rb-s4:checked ~ #p4, #rb-s4:checked ~ #n4,
+#rb-s5:checked ~ #p5, #rb-s5:checked ~ #n5 {
+  display: block;
+}
+
+/* Highlight the active dot */
+#rb-s1:checked ~ .ragbot-dots label[for="rb-s1"],
+#rb-s2:checked ~ .ragbot-dots label[for="rb-s2"],
+#rb-s3:checked ~ .ragbot-dots label[for="rb-s3"],
+#rb-s4:checked ~ .ragbot-dots label[for="rb-s4"],
+#rb-s5:checked ~ .ragbot-dots label[for="rb-s5"] {
+  background: #fff;
+}
+</style>
+
+---
+
 ## Project Structure
 
 ```
