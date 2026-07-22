@@ -1,32 +1,32 @@
-# ── Web framework ──────────────────────────────
+# --- Web framework ---
 fastapi
 uvicorn[standard]
 python-multipart
 
-# ── LangChain stack ─────────────────────────────
+# --- LangChain stack ---
 langchain
 langchain-core
 langchain-community
 langchain-ollama
 langchain-text-splitters
 
-# ── Vector DB + hybrid retrieval ────────────────
+# --- Vector DB + hybrid retrieval ---
 faiss-cpu
 rank-bm25
 
-# ── Embeddings (BGE-M3 via sentence-transformers)
+# --- Embeddings (BGE-M3 via sentence-transformers) ---
 sentence-transformers
-torch
+# torch  -- install separately with the correct CUDA build, see README "GPU Setup"
 
-# ── PDF loading ─────────────────────────────────
+# --- PDF loading ---
 pypdf
 
-# ── Web crawling / search ───────────────────────
+# --- Web crawling / search ---
 requests
 beautifulsoup4
 ddgs
 feedparser
 lxml
 
-# ── Model download helper ───────────────────────
+# --- Model download helper ---
 huggingface-hub
