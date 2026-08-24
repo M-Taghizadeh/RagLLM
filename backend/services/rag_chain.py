@@ -53,7 +53,9 @@ async def rag_stream(
     history = get_session_history(session_id)
     chat_history = list(history.messages)
 
+    yield "\x00STATUS\x00searching"
     docs = await asyncio.to_thread(retriever.invoke, question)
+    yield "\x00STATUS\x00done|" + str(len(docs))
     context = _format_docs(docs)
 
     qa_prompt = ChatPromptTemplate.from_messages([

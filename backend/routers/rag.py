@@ -233,6 +233,16 @@ async def rag_chat_stream(req: RagChatRequest):
                 session_id=req.session_id,
                 executor=_executor,
             ):
+                if token.startswith("\x00STATUS\x00"):
+                    payload = token[len("\x00STATUS\x00"):]
+                    if payload == "searching":
+                        yield f"data: {json.dumps({'status': 'retrieving', 'msg': 'در حال جستجو در پایگاه دانش...'})}\n\n"
+                    elif payload.startswith("done|"):
+                        count = payload.split("|")[1]
+                        yield f"data: {json.dumps({'status': 'retrieval_done', 'msg': f'{count} منبع یافت شد'})}\n\n"
+                    await asyncio.sleep(0)
+                    continue
+
                 if token.startswith("\x00SOURCES\x00"):
                     try:
                         import ast
