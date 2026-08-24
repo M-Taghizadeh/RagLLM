@@ -302,7 +302,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text, collection, session_id: sessionId,
-        model, ollama_url: ollamaUrl, temperature, use_web: useWeb, top_k: 20,
+        model, ollama_url: ollamaUrl, temperature, use_web: useWeb,
       }),
       signal: chatAbort.signal,
     })

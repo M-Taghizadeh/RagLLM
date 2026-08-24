@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from routers import chat, rag, article, alerts
-from services.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL
+from services.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K
 
 # ── Fix: increase multipart part size to 500MB for PDF uploads ──────────────
 # Starlette 0.46 uses MultiPartParser.max_part_size (default 1MB) — override it
@@ -107,6 +107,7 @@ def get_config():
     return {
         "default_model": DEFAULT_MODEL,
         "ollama_url":    DEFAULT_OLLAMA_URL,
+        "default_top_k": DEFAULT_TOP_K,
     }
 
 
