@@ -30,7 +30,7 @@ from services.vectorstore import (
     DEFAULT_CHUNK_OVERLAP,
 )
 from services.retrieval import HybridRetriever
-from services.llm import get_llm, check_ollama
+from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from services.rag_chain import rag_stream, clear_session
 from services.web_search import search
 
@@ -46,8 +46,8 @@ class RagChatRequest(BaseModel):
     message: str
     collection: str = "default_pdf"
     session_id: str = "rag_default"
-    model: str = "qwen2.5:14b"
-    ollama_url: str = "http://localhost:11434"
+    model: str = DEFAULT_MODEL
+    ollama_url: str = DEFAULT_OLLAMA_URL
     temperature: float = Field(0.3, ge=0.0, le=1.0)
     top_k: int = Field(8, ge=1, le=50)
     use_web: bool = False

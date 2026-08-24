@@ -48,7 +48,7 @@ function updateStatusBubble(el, message, done = false) {
 function getSettings() {
   return {
     ollamaUrl:   document.getElementById("ollamaUrl").value.trim()   || "http://localhost:11434",
-    model:       document.getElementById("modelSelect").value.trim() || "qwen2.5:14b",
+    model:       document.getElementById("modelSelect").value.trim() || document.getElementById("ollamaUrl").dataset.defaultModel || "qwen2.5:14b",
     temperature: parseFloat(document.getElementById("temperature").value) || 0.3,
     useWeb:      document.getElementById("useWeb").checked,
   };

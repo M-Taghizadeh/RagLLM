@@ -12,7 +12,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from services.crawler import fetch_article
-from services.llm import get_llm, check_ollama
+from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from services.web_search import search_text_only
 from services.rag_chain import get_session_history, clear_session
 
@@ -38,8 +38,8 @@ class FetchRequest(BaseModel):
 class ArticleChatRequest(BaseModel):
     message:     str
     session_id:  str
-    model:       str   = "qwen2.5:14b"
-    ollama_url:  str   = "http://localhost:11434"
+    model:       str   = DEFAULT_MODEL
+    ollama_url:  str   = DEFAULT_OLLAMA_URL
     temperature: float = Field(0.3, ge=0.0, le=1.0)
     use_web:     bool  = False
 

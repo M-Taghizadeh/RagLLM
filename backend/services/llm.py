@@ -3,12 +3,23 @@ LLM Service - shared ChatOllama instance management
 All functions check Ollama availability and raise clear errors.
 """
 
+import os
 import requests
+from pathlib import Path
 from langchain_ollama import ChatOllama
 from fastapi import HTTPException
 
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_MODEL      = "qwen2.5:14b"
+# Load .env from project root (two levels up from this file)
+_env_path = Path(__file__).resolve().parents[2] / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
+DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+DEFAULT_MODEL      = os.environ.get("DEFAULT_MODEL", "qwen2.5:14b")
 
 # Cache: (base_url, model, temperature) -> ChatOllama
 _cache: dict = {}

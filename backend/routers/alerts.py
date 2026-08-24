@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from services.crawler import fetch_article, fetch_rss, is_rss_url
-from services.llm import get_llm, check_ollama
+from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 
 router = APIRouter()
 
@@ -40,8 +40,8 @@ class AlertRule(BaseModel):
 class ScanRequest(BaseModel):
     url:           str
     rule_ids:      Optional[List[int]] = None
-    model:         str = "qwen2.5:14b"
-    ollama_url:    str = "http://localhost:11434"
+    model:         str = DEFAULT_MODEL
+    ollama_url:    str = DEFAULT_OLLAMA_URL
     max_rss_items: int = 20
 
 

@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from services.llm import get_llm, list_ollama_models, check_ollama
+from services.llm import get_llm, list_ollama_models, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from services.web_search import search
 from services.rag_chain import get_session_history, clear_session
 
@@ -30,15 +30,15 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message:     str
     session_id:  str  = "default"
-    model:       str  = "qwen2.5:14b"
-    ollama_url:  str  = "http://localhost:11434"
+    model:       str  = DEFAULT_MODEL
+    ollama_url:  str  = DEFAULT_OLLAMA_URL
     temperature: float = Field(0.3, ge=0.0, le=1.0)
     use_web:     bool = False
     web_results: int  = Field(6, ge=1, le=20)
 
 
 class ModelsRequest(BaseModel):
-    ollama_url: str = "http://localhost:11434"
+    ollama_url: str = DEFAULT_OLLAMA_URL
 
 
 # ------------------------------------------------------------------ #

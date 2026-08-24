@@ -34,9 +34,22 @@
   const ollamaUrl$   = document.getElementById("ollamaUrl");
   const modelSelect$ = document.getElementById("modelSelect");
 
+  // Fetch default model/url from backend .env config, then load models
+  async function initFromConfig() {
+    try {
+      const cfg = await apiGet("/config");
+      if (cfg.ollama_url)    ollamaUrl$.value = cfg.ollama_url;
+      if (cfg.default_model) ollamaUrl$.dataset.defaultModel = cfg.default_model;
+    } catch {
+      // fallback: keep existing HTML default values
+    }
+    loadModels();
+  }
+
   async function loadModels() {
       refreshBtn$.disabled = true;
       refreshBtn$.style.opacity = "0.5";
+    const defaultModel = ollamaUrl$.dataset.defaultModel || "";
     try {
       const data = await apiPost("/chat/models", { ollama_url: ollamaUrl$.value.trim() });
       const models = data.models || [];
@@ -47,12 +60,14 @@
         models.forEach(m => {
           const opt = document.createElement("option");
           opt.value = opt.textContent = m;
-          if (m.startsWith("qwen")) opt.selected = true;
+          // select the .env default model if present, otherwise first model
+          if (defaultModel ? m === defaultModel : m.startsWith("qwen")) opt.selected = true;
           modelSelect$.appendChild(opt);
         });
       }
     } catch {
-      modelSelect$.innerHTML = `<option value="qwen2.5:14b">qwen2.5:14b (پیش‌فرض)</option>`;
+      const fallback = defaultModel || "qwen2.5:14b";
+      modelSelect$.innerHTML = `<option value="${fallback}">${fallback} (پیش‌فرض)</option>`;
     } finally {
       refreshBtn$.disabled = false;
       refreshBtn$.style.opacity = "1";
@@ -62,7 +77,7 @@
   refreshBtn$.addEventListener("click", loadModels);
   ollamaUrl$.addEventListener("change", loadModels);
 
-  // Auto-load models on startup
-  loadModels();
+  // Auto-load models on startup — read config from backend first
+  initFromConfig();
 
 })();
