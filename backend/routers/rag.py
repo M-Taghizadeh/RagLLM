@@ -30,7 +30,7 @@ from services.vectorstore import (
     DEFAULT_CHUNK_OVERLAP,
 )
 from services.retrieval import HybridRetriever
-from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K
+from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K, DENSE_WEIGHT, SPARSE_WEIGHT
 from services.rag_chain import rag_stream, clear_session
 from services.web_search import search
 
@@ -207,6 +207,8 @@ async def rag_chat_stream(req: RagChatRequest):
                 dense_k=max(req.top_k * 2, 16),
                 sparse_k=max(req.top_k * 2, 16),
                 final_k=req.top_k,
+                dense_weight=DENSE_WEIGHT,
+                sparse_weight=SPARSE_WEIGHT,
             )
             llm = get_llm(req.ollama_url, req.model, req.temperature)
             user_input = req.message
