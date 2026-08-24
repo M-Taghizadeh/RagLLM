@@ -324,8 +324,10 @@
             try {
               const p = JSON.parse(line.slice(5).trim());
               if (p.error)   { bubble.textContent = `⚠️ ${p.error}`; bubble.style.color = "var(--danger)"; finalize(); return; }
-              if (p.status === "searching")   { statusBubble = createStatusBubble(chatWindow$, p.msg); }
-              if (p.status === "search_done") { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
+              if (p.status === "retrieving")     { statusBubble = createStatusBubble(chatWindow$, p.msg); }
+              if (p.status === "retrieval_done") { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
+              if (p.status === "searching")      { statusBubble = createStatusBubble(chatWindow$, p.msg); }
+              if (p.status === "search_done")    { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
               if (p.token)   { bubble.textContent += p.token; chatWindow$.scrollTop = chatWindow$.scrollHeight; }
               if (p.sources)     { sourcesData = p.sources; }
               if (p.web_sources) { appendWebSources(wrap, p.web_sources); }
