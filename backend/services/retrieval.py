@@ -23,11 +23,11 @@ def reciprocal_rank_fusion(
     for docs in result_lists:
         for rank, doc in enumerate(docs, start=1):
             key = (
-                doc.page_content[:200]
-                + "|"
-                + str(doc.metadata.get("source_file", ""))
+                str(doc.metadata.get("source_file", ""))
                 + "|"
                 + str(doc.metadata.get("page", ""))
+                + "|"
+                + doc.page_content
             )
             scores[key] = scores.get(key, 0.0) + 1.0 / (k + rank)
             if key not in docs_by_key:
