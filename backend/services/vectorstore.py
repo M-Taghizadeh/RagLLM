@@ -20,7 +20,7 @@ from typing import List, Tuple, Callable, Optional
 import numpy as np
 import faiss as faiss_lib
 from langchain_core.documents import Document
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -115,6 +115,25 @@ def _make_splitter(chunk_size: int, chunk_overlap: int) -> RecursiveCharacterTex
     )
 
 
+def _load_file(path: str, fname: str, splitter: RecursiveCharacterTextSplitter) -> List[Document]:
+    """Load PDF or Word file and return split documents."""
+    ext = os.path.splitext(fname)[1].lower()
+    if ext == ".pdf":
+        loader = PyPDFLoader(path)
+        pages = loader.load()
+        for p in pages:
+            p.metadata["source_file"] = fname
+        return splitter.split_documents(pages)
+    elif ext in (".docx", ".doc"):
+        loader = Docx2txtLoader(path)
+        pages = loader.load()
+        for p in pages:
+            p.metadata["source_file"] = fname
+            p.metadata["page"] = ""
+        return splitter.split_documents(pages)
+    return []
+
+
 def build_vectorstore_from_pdfs(
     pdf_paths: List[str],
     collection: str,
@@ -141,16 +160,13 @@ def build_vectorstore_from_pdfs(
         fname = os.path.basename(path)
         cb(5 + int(25 * i / max(len(pdf_paths), 1)), f"خواندن فایل: {fname}")
         try:
-            loader = PyPDFLoader(path)
-            pages = loader.load()
-            for p in pages:
-                p.metadata["source_file"] = fname
-            all_docs.extend(splitter.split_documents(pages))
+            docs = _load_file(path, fname, splitter)
+            all_docs.extend(docs)
         except Exception as e:
             print(f"[vectorstore] Error loading {path}: {e}")
 
     if not all_docs:
-        raise ValueError("هیچ متنی از فایل‌های PDF استخراج نشد.")
+        raise ValueError("هیچ متنی از فایل‌های ارسال‌شده استخراج نشد.")
 
     cb(30, f"تعداد قطعات: {len(all_docs)} — شروع embedding (BGE-M3)...")
 

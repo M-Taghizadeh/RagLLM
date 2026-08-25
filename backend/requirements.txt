@@ -21,6 +21,10 @@ sentence-transformers
 # --- PDF loading ---
 pypdf
 
+# --- Word loading ---
+python-docx
+docx2txt
+
 # --- Web crawling / search ---
 requests
 beautifulsoup4

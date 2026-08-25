@@ -1,6 +1,6 @@
 """
 Router: /api/rag
-PDF indexing with SSE progress + cancel support, hybrid RAG chat.
+PDF & Word indexing with SSE progress + cancel support, hybrid RAG chat.
 """
 
 import json
@@ -84,7 +84,7 @@ async def _save_uploaded_pdfs(request: Request):
         job_id = form_data.get("job_id", "")
 
         for key, val in form_data.multi_items():
-            if key == "files" and hasattr(val, "filename") and val.filename.lower().endswith(".pdf"):
+            if key == "files" and hasattr(val, "filename") and val.filename.lower().endswith((".pdf", ".docx", ".doc")):
                 dest = os.path.join(tmp_dir, val.filename)
                 content = await val.read()
                 with open(dest, "wb") as f:
@@ -109,7 +109,7 @@ async def index_pdfs_stream(request: Request):
 
     if not saved_paths:
         shutil.rmtree(tmp_dir, ignore_errors=True)
-        raise HTTPException(400, detail="فایل PDF معتبری ارسال نشد.")
+        raise HTTPException(400, detail="فایل PDF یا Word معتبری ارسال نشد.")
 
     chunk_size = int(chunk_size_s) if str(chunk_size_s).isdigit() else DEFAULT_CHUNK_SIZE
     chunk_overlap = (

@@ -1,5 +1,5 @@
 /**
- * rag.js — PDF RAG module
+ * rag.js — PDF & Word RAG module
  * Stop button for both indexing and chat.
  * AbortController cancels fetch on page unload / stop click.
  * Cancel indexing via DELETE /api/rag/index/:job_id
@@ -9,9 +9,9 @@
   let sessionId     = newSessionId("rag");
   let isStreaming   = false;
   let isIndexing    = false;
-  let chatAbort     = null;   // AbortController for chat stream
-  let indexAbort    = null;   // AbortController for index stream
-  let currentJobId  = null;   // job_id sent to backend for cancel
+  let chatAbort     = null;
+  let indexAbort    = null;
+  let currentJobId  = null;
 
   const chatWindow$    = document.getElementById("ragChatWindow");
   const input$         = document.getElementById("ragInput");
@@ -21,30 +21,150 @@
   const pdfInput$      = document.getElementById("pdfInput");
   const fileList$      = document.getElementById("pdfFileList");
   const collectionIn$  = document.getElementById("ragCollection");
-  const collectionSel$ = document.getElementById("ragCollectionSelect");
+  const collectionSel$ = document.getElementById("ragCollectionSelect"); // hidden native
   const refreshCols$   = document.getElementById("ragRefreshCollections");
   const indexBtn$      = document.getElementById("ragIndex");
   const status$        = document.getElementById("ragStatus");
 
+  // Custom dropdown elements
+  const dropBtn$    = document.getElementById("collectionDropdownBtn");
+  const dropLabel$  = document.getElementById("collectionDropdownLabel");
+  const dropList$   = document.getElementById("collectionDropdownList");
+
+  // Modal elements
+  const modalBackdrop$   = document.getElementById("indexModalBackdrop");
+  const modalClose$      = document.getElementById("indexModalClose");
+  const modalCancel$     = document.getElementById("indexModalCancel");
+  const modalConfirm$    = document.getElementById("indexModalConfirm");
+  const modalSub$        = document.getElementById("indexModalSub");
+  const modalFileChips$  = document.getElementById("indexModalFileChips");
+  const modalInput$      = document.getElementById("indexCollectionInput");
+
+  // ── Modal logic ──────────────────────────────────────────────────
+
+  function openIndexModal() {
+    // populate file chips in modal
+    modalFileChips$.innerHTML = "";
+    selectedFiles.forEach(f => {
+      const chip = document.createElement("div");
+      chip.className = "file-tag";
+      chip.innerHTML = `<span>${fileIcon(f)} ${escHtml(f.name)}</span>`;
+      modalFileChips$.appendChild(chip);
+    });
+    // subtitle
+    modalSub$.textContent = `${selectedFiles.length} فایل انتخاب‌شده`;
+    // pre-fill input with current collection value
+    modalInput$.value = collectionIn$.value || "default_pdf";
+    // open
+    modalBackdrop$.classList.add("open");
+    modalBackdrop$.removeAttribute("aria-hidden");
+    setTimeout(() => modalInput$.focus(), 60);
+  }
+
+  function closeIndexModal() {
+    modalBackdrop$.classList.remove("open");
+    modalBackdrop$.setAttribute("aria-hidden", "true");
+  }
+
+  modalClose$.addEventListener("click", closeIndexModal);
+  modalCancel$.addEventListener("click", closeIndexModal);
+  modalBackdrop$.addEventListener("click", e => {
+    if (e.target === modalBackdrop$) closeIndexModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && modalBackdrop$.classList.contains("open")) closeIndexModal();
+  });
+  modalInput$.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); modalConfirm$.click(); }
+  });
+
   let selectedFiles = [];
+  let collectionsData = []; // cached list
+
+  // ── Custom Dropdown logic ────────────────────────────────────────
+
+  function openDropdown() {
+    dropList$.classList.add("open");
+    dropBtn$.setAttribute("aria-expanded", "true");
+  }
+
+  function closeDropdown() {
+    dropList$.classList.remove("open");
+    dropBtn$.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleDropdown() {
+    dropList$.classList.contains("open") ? closeDropdown() : openDropdown();
+  }
+
+  function selectCollection(value, label) {
+    dropLabel$.textContent = label || value;
+    collectionSel$.value = value;
+    if (value) collectionIn$.value = value;
+    // update selected state
+    dropList$.querySelectorAll("li").forEach(li => {
+      li.classList.toggle("selected", li.dataset.value === value);
+    });
+    closeDropdown();
+  }
+
+  function renderDropdown(collections) {
+    collectionsData = collections;
+    dropList$.innerHTML = "";
+
+    if (!collections.length) {
+      const empty = document.createElement("li");
+      empty.className = "custom-select-empty";
+      empty.textContent = "هیچ مجموعه‌ای یافت نشد";
+      dropList$.appendChild(empty);
+      return;
+    }
+
+    collections.forEach(c => {
+      const li = document.createElement("li");
+      li.dataset.value = c;
+      li.innerHTML = `
+        <span class="col-icon">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M3 3h4l1 2h5v8H3z"/>
+          </svg>
+        </span>
+        <span>${escHtml(c)}</span>`;
+      if (collectionIn$.value === c) li.classList.add("selected");
+      li.addEventListener("click", () => selectCollection(c, c));
+      dropList$.appendChild(li);
+
+      // keep native select in sync for rag.js references
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = c;
+      collectionSel$.appendChild(opt);
+    });
+  }
+
+  dropBtn$.addEventListener("click", (e) => { e.stopPropagation(); toggleDropdown(); });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#collectionDropdownWrap")) closeDropdown();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDropdown();
+  });
 
   // ── Stop buttons ─────────────────────────────────────────────────
 
-  // Stop chat button (inject after send button)
   const stopChat$ = document.createElement("button");
   stopChat$.className = "btn-stop";
   stopChat$.textContent = "⏹ توقف";
   stopChat$.style.display = "none";
   send$.parentNode.insertBefore(stopChat$, send$.nextSibling);
 
-  // Stop index button (inject after index button)
   const stopIndex$ = document.createElement("button");
   stopIndex$.className = "btn-stop";
   stopIndex$.textContent = "⏹ لغو ایندکس";
   stopIndex$.style.display = "none";
   indexBtn$.parentNode.insertBefore(stopIndex$, indexBtn$.nextSibling);
 
-  // Progress bar (inject after status bar)
   const progressWrap$ = document.createElement("div");
   progressWrap$.className = "index-progress-wrap";
   progressWrap$.style.display = "none";
@@ -85,17 +205,27 @@
   stopChat$.addEventListener("click", stopChat);
   stopIndex$.addEventListener("click", stopIndex);
 
-  // Abort on page unload / refresh
   window.addEventListener("beforeunload", () => {
     if (chatAbort)  chatAbort.abort();
     if (indexAbort) indexAbort.abort();
-    // Fire-and-forget cancel request (best effort)
-    if (currentJobId) {
-      navigator.sendBeacon(`${API_BASE}/rag/index/${currentJobId}`, "");
-    }
+    if (currentJobId) navigator.sendBeacon(`${API_BASE}/rag/index/${currentJobId}`, "");
   });
 
   // ── File picker / drop zone ──────────────────────────────────────
+
+  const ALLOWED_TYPES = ["application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword"];
+  const ALLOWED_EXT   = /\.(pdf|docx|doc)$/i;
+
+  function isAllowed(file) {
+    return ALLOWED_TYPES.includes(file.type) || ALLOWED_EXT.test(file.name);
+  }
+
+  function fileIcon(file) {
+    if (file.name.match(/\.(docx|doc)$/i)) return "📝";
+    return "📄";
+  }
 
   pdfDrop$.addEventListener("click", () => pdfInput$.click());
   pdfDrop$.addEventListener("dragover",  e => { e.preventDefault(); pdfDrop$.classList.add("drag-over"); });
@@ -109,7 +239,7 @@
 
   function addFiles(files) {
     files.forEach(f => {
-      if (f.type === "application/pdf" && !selectedFiles.find(x => x.name === f.name))
+      if (isAllowed(f) && !selectedFiles.find(x => x.name === f.name))
         selectedFiles.push(f);
     });
     renderFileList();
@@ -120,7 +250,7 @@
     selectedFiles.forEach((f, i) => {
       const tag = document.createElement("div");
       tag.className = "file-tag";
-      tag.innerHTML = `<span>📄 ${escHtml(f.name)}</span><span class="remove-file" data-i="${i}">✕</span>`;
+      tag.innerHTML = `<span>${fileIcon(f)} ${escHtml(f.name)}</span><span class="remove-file" data-i="${i}">✕</span>`;
       fileList$.appendChild(tag);
     });
     fileList$.querySelectorAll(".remove-file").forEach(btn => {
@@ -133,23 +263,28 @@
   async function loadCollections() {
     try {
       const data = await apiGet("/rag/collections");
-      collectionSel$.innerHTML = `<option value="">— انتخاب مجموعه موجود —</option>`;
-      (data.collections || []).forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = opt.textContent = c;
-        collectionSel$.appendChild(opt);
-      });
-    } catch {}
+      collectionSel$.innerHTML = "";
+      renderDropdown(data.collections || []);
+    } catch {
+      renderDropdown([]);
+    }
   }
 
   refreshCols$.addEventListener("click", loadCollections);
-  collectionSel$.addEventListener("change", () => { if (collectionSel$.value) collectionIn$.value = collectionSel$.value; });
 
   // ── Index PDFs ───────────────────────────────────────────────────
 
+  // Index button → open modal (or warn if no files)
   indexBtn$.addEventListener("click", () => {
-    if (!selectedFiles.length) { setStatus(status$, "ابتدا فایل PDF انتخاب کنید.", "warn"); return; }
-    const collection = collectionIn$.value.trim() || "default_pdf";
+    if (!selectedFiles.length) { setStatus(status$, "ابتدا فایل PDF یا Word انتخاب کنید.", "warn"); return; }
+    openIndexModal();
+  });
+
+  // Modal confirm → start indexing
+  modalConfirm$.addEventListener("click", () => {
+    const collection = (modalInput$.value.trim() || collectionIn$.value.trim() || "default_pdf");
+    collectionIn$.value = collection;
+    closeIndexModal();
 
     setStatus(status$, "⏳ شروع ایندکس...", "info");
     setProgress(2);
@@ -201,6 +336,7 @@
                 setStatus(status$, msg, "ok");
                 selectedFiles = []; renderFileList();
                 collectionIn$.value = realName;
+                dropLabel$.textContent = realName;
                 loadCollections();
                 finalizeIndex(); return;
               }

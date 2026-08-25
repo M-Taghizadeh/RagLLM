@@ -25,22 +25,22 @@
       </div>
       <div class="brand-text">
         <span class="brand-name">RagBot</span>
-        <span class="brand-tag">دانش محلی · Hybrid RAG</span>
+        <span class="brand-tag">مبتنی بر Hybrid RAG</span>
       </div>
     </div>
 
     <nav class="sidebar-nav">
       <button class="nav-item active" data-section="chat">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v8a3 3 0 01-3 3H9l-5 4v-4a3 3 0 01-0-0z"/></svg>
-        <span class="nav-label">چت‌بات</span>
+        <span class="nav-label">چت‌بات هوشمند</span>
       </button>
       <button class="nav-item" data-section="rag">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-        <span class="nav-label">اسناد PDF</span>
+        <span class="nav-label">چت‌بات اسناد داخلی</span>
       </button>
       <button class="nav-item" data-section="article">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
-        <span class="nav-label">مقاله وب</span>
+        <span class="nav-label">چت‌بات مقالات وب</span>
       </button>
       <button class="nav-item" data-section="alerts">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 016 6c0 4 2 5 2 5H4s2-1 2-5a6 6 0 016-6z"/><path d="M10 19a2 2 0 004 0"/></svg>
@@ -51,25 +51,54 @@
     <div class="sidebar-settings">
       <div class="settings-title">تنظیمات</div>
 
-      <label class="field-label">آدرس Ollama</label>
-      <input type="text" id="ollamaUrl" class="field-input" value="http://localhost:11434" />
-
-      <label class="field-label">مدل</label>
-      <div class="row-gap">
-        <select id="modelSelect" class="field-input" style="flex:1"></select>
-        <button id="refreshModels" class="btn-icon" title="بارگذاری مدل‌ها" type="button">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-        </button>
+      <!-- Ollama URL -->
+      <div class="setting-row">
+        <span class="setting-row-lbl">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>
+          آدرس
+        </span>
+        <input type="text" id="ollamaUrl" class="setting-row-input" value="http://localhost:11434" title="آدرس Ollama" />
       </div>
 
-      <label class="field-label">خلاقیت</label>
-      <div class="row-gap">
-        <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.3" style="flex:1" />
-        <span id="tempVal" class="badge">0.3</span>
+      <!-- Model -->
+      <div class="setting-row setting-row-model">
+        <span class="setting-row-lbl">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5 7h6M5 10h4"/></svg>
+          مدل
+        </span>
+        <div class="setting-row-ctrl">
+          <div class="custom-select-wrap model-select-wrap" id="modelSelectWrap">
+            <button type="button" class="custom-select-btn" id="modelSelectBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="modelSelectLabel">بارگذاری...</span>
+              <svg class="caret" viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+            </button>
+            <ul class="custom-select-list" id="modelSelectList" role="listbox" aria-label="مدل‌های Ollama"></ul>
+            <select id="modelSelect" hidden></select>
+          </div>
+          <button id="refreshModels" class="btn-icon btn-icon-sm" title="بارگذاری مدل‌ها" type="button">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+          </button>
+        </div>
       </div>
 
-      <div class="toggle-row">
-        <label for="useWeb">جستجوی وب</label>
+      <!-- Temperature -->
+      <div class="setting-row">
+        <span class="setting-row-lbl">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 2v7"/><circle cx="8" cy="12" r="2.5"/></svg>
+          خلاقیت
+        </span>
+        <div class="setting-row-ctrl">
+          <input type="range" id="temperature" class="temp-slider" min="0" max="1" step="0.05" value="0.3" style="--pct:30%" />
+          <span id="tempVal" class="temp-badge">0.30</span>
+        </div>
+      </div>
+
+      <!-- Web search toggle -->
+      <div class="setting-row">
+        <span class="setting-row-lbl">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2a9 9 0 010 12M8 2a9 9 0 000 12"/></svg>
+          جستجوی وب
+        </span>
         <label class="toggle-switch">
           <input type="checkbox" id="useWeb" />
           <span class="toggle-slider"></span>
@@ -78,7 +107,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <span>BGE-M3 · FAISS · BM25</span>
+      <span>معماری سامانه : Hybrid RAG</span>
     </div>
   </aside>
 
@@ -105,36 +134,50 @@
       <div class="section-header">
         <div>
           <p class="section-eyebrow">Hybrid RAG</p>
-          <h1>چت روی اسناد PDF</h1>
+          <h1>چت روی اسناد</h1>
         </div>
         <button class="btn-secondary" id="clearRag" type="button">پاک کردن</button>
       </div>
 
-      <div class="panel" id="ragUploadPanel">
-        <div class="panel-title">آپلود و ایندکس PDF</div>
-        <div class="upload-drop" id="pdfDrop">
-          <span class="upload-icon" aria-hidden="true">
-            <svg viewBox="0 0 48 48" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M24 32V14M24 14l-6 6M24 14l6 6"/>
-              <path d="M10 34a8 8 0 018-8h12a8 8 0 010 16H18a8 8 0 01-8-8z" opacity=".5"/>
-            </svg>
-          </span>
-          <span>فایل‌های PDF را اینجا رها کنید یا کلیک کنید</span>
-          <input type="file" id="pdfInput" accept=".pdf" multiple hidden />
-        </div>
-        <div id="pdfFileList" class="file-list"></div>
+      <div class="panel upload-panel" id="ragUploadPanel">
+        <div class="upload-toolbar">
 
-        <label class="field-label">نام مجموعه</label>
-        <input type="text" id="ragCollection" class="field-input" value="default_pdf" />
+          <!-- Right group: file upload -->
+          <div class="upload-toolbar-group upload-toolbar-file">
+            <div class="upload-trigger" id="pdfDrop">
+              <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13V4M10 4L7 7M10 4l3 3"/><path d="M3 14a4 4 0 004 4h6a4 4 0 000-8H9"/></svg>
+              <span>آپلود فایل</span>
+              <span class="upload-formats">PDF · Word</span>
+              <input type="file" id="pdfInput" accept=".pdf,.doc,.docx" multiple hidden />
+            </div>
+            <div id="pdfFileList" class="file-list-inline"></div>
+          </div>
 
-        <div class="row-gap" style="margin-top:10px">
-          <button id="ragIndex" class="btn-primary" type="button">ایندکس کردن</button>
-          <select id="ragCollectionSelect" class="field-input" style="flex:1">
-            <option value="">— انتخاب مجموعه موجود —</option>
-          </select>
-          <button id="ragRefreshCollections" class="btn-icon" title="بارگذاری مجموعه‌ها" type="button">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-          </button>
+          <div class="upload-toolbar-divider" aria-hidden="true"></div>
+
+          <!-- Left group: collection + action -->
+          <div class="upload-toolbar-group upload-toolbar-collection">
+
+            <div class="custom-select-wrap" id="collectionDropdownWrap">
+              <button type="button" class="custom-select-btn" id="collectionDropdownBtn" aria-haspopup="listbox" aria-expanded="false">
+                <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 5h16M2 10h10M2 15h6"/></svg>
+                <span id="collectionDropdownLabel">انتخاب مجموعه</span>
+                <svg class="caret" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </button>
+              <ul class="custom-select-list" id="collectionDropdownList" role="listbox" aria-label="مجموعه‌های موجود"></ul>
+              <select id="ragCollectionSelect" hidden></select>
+            </div>
+
+            <button id="ragRefreshCollections" class="btn-icon btn-icon-sm" title="بارگذاری مجموعه‌ها" type="button">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+            </button>
+
+            <button id="ragIndex" class="btn-primary btn-index" type="button">
+              <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 10h16M12 3v14"/></svg>
+              ایندکس
+            </button>
+          </div>
+
         </div>
         <div id="ragStatus" class="status-bar"></div>
       </div>
@@ -226,6 +269,46 @@
     </section>
 
   </main>
+
+  <!-- Index Collection Modal -->
+  <div class="modal-backdrop" id="indexModalBackdrop" aria-hidden="true">
+    <div class="modal" id="indexModal" role="dialog" aria-modal="true" aria-labelledby="indexModalTitle">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V8l8-5 8 5v11"/><path d="M4 11h16M12 3v16"/><rect x="9" y="14" width="6" height="5" rx="1"/></svg>
+        </div>
+        <div>
+          <h2 id="indexModalTitle">ایندکس اسناد</h2>
+          <p class="modal-sub" id="indexModalSub">۰ فایل انتخاب‌شده</p>
+        </div>
+        <button class="modal-close" id="indexModalClose" type="button" aria-label="بستن">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div id="indexModalFileChips" class="modal-file-chips"></div>
+
+        <label class="modal-label" for="indexCollectionInput">نام مجموعه</label>
+        <div class="modal-input-wrap">
+          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h5l2 2h7v10H3z"/></svg>
+          <input type="text" id="indexCollectionInput" class="modal-input" placeholder="مثال: گزارش‌های مالی" autocomplete="off" />
+        </div>
+        <p class="modal-hint">نام مجموعه برای بازیابی بعدی استفاده می‌شود. فقط حروف انگلیسی، عدد و زیرخط.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary modal-cancel" id="indexModalCancel" type="button">انصراف</button>
+        <button class="btn-primary modal-confirm" id="indexModalConfirm" type="button">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 11h16M12 3v14"/></svg>
+          شروع ایندکس
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- hidden collection value used by rag.js -->
+  <input type="hidden" id="ragCollection" value="default_pdf" />
 
   <script src="js/api.js"></script>
   <script src="js/chat.js"></script>
