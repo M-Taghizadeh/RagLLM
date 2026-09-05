@@ -6,10 +6,12 @@ News alert rules management + scanning URLs/RSS feeds against defined rules.
 import json
 import sqlite3
 import os
-from typing import List, Optional
+import asyncio
+from typing import List, Optional, AsyncGenerator
 from langchain_core.messages import HumanMessage
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from services.crawler import fetch_article, fetch_rss, is_rss_url
@@ -259,3 +261,133 @@ async def scan_url(req: ScanRequest):
         "alerts_found":     len(alerts_found),
         "alerts":           alerts_found,
     }
+
+
+# ------------------------------------------------------------------ #
+# Scan — SSE streaming                                                 #
+# ------------------------------------------------------------------ #
+
+def _sse(data: dict) -> str:
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@router.post("/scan/stream")
+async def scan_url_stream(req: ScanRequest):
+    """Same as /scan but streams SSE events per article."""
+
+    if not check_ollama(req.ollama_url):
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ollama در دسترس نیست ({req.ollama_url}). لطفاً 'ollama serve' را اجرا کنید."
+        )
+
+    conn = get_db()
+    if req.rule_ids:
+        placeholders = ",".join("?" * len(req.rule_ids))
+        rules = conn.execute(
+            f"SELECT * FROM alert_rules WHERE id IN ({placeholders})",
+            req.rule_ids
+        ).fetchall()
+    else:
+        rules = conn.execute("SELECT * FROM alert_rules").fetchall()
+    conn.close()
+
+    if not rules:
+        raise HTTPException(status_code=400, detail="هیچ قانون هشداری تعریف نشده است.")
+
+    async def generate() -> AsyncGenerator[str, None]:
+        # ── Fetch content ──────────────────────────────────────────
+        articles = []
+        if is_rss_url(req.url):
+            yield _sse({"status": "fetching", "msg": "در حال دریافت فید RSS..."})
+            await asyncio.sleep(0)
+            try:
+                feed_items = await asyncio.to_thread(fetch_rss, req.url, req.max_rss_items)
+                for item in feed_items:
+                    articles.append({
+                        "url":     item["url"],
+                        "title":   item["title"],
+                        "content": item["summary"],
+                    })
+                yield _sse({"status": "fetched", "msg": f"{len(articles)} خبر دریافت شد", "total": len(articles)})
+                await asyncio.sleep(0)
+            except Exception as e:
+                yield _sse({"error": f"خطا در خواندن RSS: {e}"})
+                return
+        else:
+            yield _sse({"status": "fetching", "msg": "در حال بارگذاری مقاله..."})
+            await asyncio.sleep(0)
+            try:
+                fetched = await asyncio.to_thread(fetch_article, req.url)
+                articles.append({
+                    "url":     fetched["url"],
+                    "title":   fetched["title"],
+                    "content": fetched["text"],
+                })
+                yield _sse({"status": "fetched", "msg": "مقاله بارگذاری شد", "total": 1})
+                await asyncio.sleep(0)
+            except Exception as e:
+                yield _sse({"error": f"خطا در بارگذاری URL: {e}"})
+                return
+
+        if not articles:
+            yield _sse({"error": "محتوایی برای اسکن یافت نشد."})
+            return
+
+        # ── LLM matching ───────────────────────────────────────────
+        llm = get_llm(req.ollama_url, req.model, 0.0)
+        rules_list = [dict(r) for r in rules]
+        total_articles = len(articles)
+        alerts_found = 0
+
+        for a_idx, article in enumerate(articles):
+            yield _sse({
+                "status": "scanning",
+                "msg": f"تحلیل خبر {a_idx + 1} از {total_articles}: {article['title'] or article['url']}",
+                "article_index": a_idx,
+                "total": total_articles,
+            })
+            await asyncio.sleep(0)
+
+            for rule in rules_list:
+                prompt = _build_scan_prompt(article["content"], rule)
+                try:
+                    response = await llm.ainvoke([HumanMessage(content=prompt)])
+                    result_text = response.content if hasattr(response, "content") else str(response)
+                    parsed = _parse_llm_response(result_text)
+                except Exception as e:
+                    yield _sse({"error": f"خطا در ارتباط با Ollama: {e}"})
+                    return
+
+                if parsed["matched"]:
+                    alerts_found += 1
+                    db = get_db()
+                    db.execute(
+                        "INSERT INTO alert_results (rule_id, source_url, title, excerpt) VALUES (?,?,?,?)",
+                        (rule["id"], article["url"], article["title"], parsed["excerpt"]),
+                    )
+                    db.commit()
+                    db.close()
+
+                    yield _sse({
+                        "status": "alert",
+                        "alert": {
+                            "rule_id":   rule["id"],
+                            "rule_name": rule["name"],
+                            "category":  rule["category"],
+                            "url":       article["url"],
+                            "title":     article["title"],
+                            "reason":    parsed["reason"],
+                            "excerpt":   parsed["excerpt"],
+                        }
+                    })
+                    await asyncio.sleep(0)
+
+        yield _sse({
+            "status": "done",
+            "articles_scanned": total_articles,
+            "rules_checked":    len(rules_list),
+            "alerts_found":     alerts_found,
+        })
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
