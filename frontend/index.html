@@ -174,7 +174,7 @@
 
             <button id="ragIndex" class="btn-primary btn-index" type="button">
               <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 10h16M12 3v14"/></svg>
-              ایندکس
+              ایندکس گذاری
             </button>
           </div>
 
@@ -201,7 +201,7 @@
       <div class="panel">
         <div class="panel-title">لینک مقاله یا خبر</div>
         <div class="row-gap">
-          <input type="url" id="articleUrl" class="field-input" placeholder="https://..." style="flex:1" />
+          <input type="url" id="articleUrl" class="field-input" placeholder="https://..." style="flex:1;direction:ltr;text-align:left" />
           <button id="articleFetch" class="btn-primary" type="button">بارگذاری</button>
         </div>
         <div id="articleStatus" class="status-bar"></div>
@@ -221,49 +221,94 @@
           <p class="section-eyebrow">مانیتورینگ</p>
           <h1>هشدارهای خبری</h1>
         </div>
+        <button class="btn-primary" id="addRuleBtn" type="button">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+          قانون جدید
+        </button>
       </div>
 
-      <div class="alerts-grid">
-        <div class="panel">
-          <div class="panel-title">قوانین هشدار</div>
-          <div id="rulesList" class="rules-list"></div>
+      <div class="alerts-layout">
 
-          <div class="rule-form" id="ruleForm">
-            <div class="panel-title" style="font-size:14px">افزودن / ویرایش قانون</div>
+        <!-- RIGHT: rules list -->
+        <div class="alerts-rules-col">
+          <div class="panel alerts-rules-panel">
+            <div class="panel-title">قوانین هشدار</div>
+            <div id="rulesList" class="rules-list"></div>
+          </div>
+        </div>
+
+        <!-- LEFT: scan + history tabs -->
+        <div class="alerts-main-col">
+          <div class="panel alerts-main-panel">
+
+            <!-- Tab bar -->
+            <div class="alerts-tabs" role="tablist">
+              <button class="alerts-tab active" id="tabScan" role="tab" aria-selected="true" aria-controls="tabpanelScan" type="button">
+                <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>
+                اسکن خبر
+              </button>
+              <button class="alerts-tab" id="tabHistory" role="tab" aria-selected="false" aria-controls="tabpanelHistory" type="button">
+                <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h14M3 10h10M3 15h6"/></svg>
+                تاریخچه
+                <span class="alerts-tab-badge" id="historyBadge" hidden></span>
+              </button>
+            </div>
+
+            <!-- Scan panel -->
+            <div class="alerts-tabpanel" id="tabpanelScan" role="tabpanel" aria-labelledby="tabScan">
+              <label class="field-label">آدرس خبر یا فید RSS</label>
+              <div class="scan-url-row">
+                <input type="url" id="scanUrl" class="field-input" placeholder="https://..." style="direction:ltr;text-align:left" />
+                <button id="scanBtn" class="btn-primary" type="button">
+                  <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>
+                  اسکن
+                </button>
+              </div>              <label class="field-label" style="margin-top:4px">قوانین مورد بررسی</label>
+              <div id="scanRuleCheckboxes" class="checkboxes-list"></div>
+              <div id="scanStatus" class="status-bar"></div>
+              <div id="scanResults" class="scan-results"></div>
+            </div>
+
+            <!-- History panel -->
+            <div class="alerts-tabpanel" id="tabpanelHistory" role="tabpanel" aria-labelledby="tabHistory" hidden>
+              <div class="alerts-history-toolbar">
+                <span class="alerts-history-label">نتایج هشدار ذخیره‌شده</span>
+                <button id="refreshResults" class="btn-icon btn-icon-sm" title="بارگذاری مجدد" type="button">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+                </button>
+              </div>
+              <div id="alertHistory" class="alert-history-list"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rule form slide panel -->
+      <div class="rule-form-backdrop" id="ruleFormBackdrop" aria-hidden="true">
+        <div class="rule-form-panel" id="ruleFormPanel" role="dialog" aria-modal="true" aria-labelledby="ruleFormTitle">
+          <div class="rule-form-header">
+            <h3 id="ruleFormTitle">قانون جدید</h3>
+            <button class="modal-close" id="ruleFormClose" type="button" aria-label="بستن">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+            </button>
+          </div>
+          <div class="rule-form-body">
             <input type="hidden" id="ruleId" value="" />
             <label class="field-label">نام هشدار</label>
             <input type="text" id="ruleName" class="field-input" placeholder="مثال: بحران ارزی" />
             <label class="field-label">دسته‌بندی</label>
             <input type="text" id="ruleCategory" class="field-input" placeholder="مثال: اقتصادی، سیاسی" />
-            <label class="field-label">کلیدواژه‌ها (با کاما)</label>
+            <label class="field-label">کلیدواژه‌ها <small style="font-weight:400;color:var(--ink-muted)">(با کاما)</small></label>
             <input type="text" id="ruleKeywords" class="field-input" placeholder="دلار، نرخ ارز، صعود قیمت" />
-            <label class="field-label">توضیحات (اختیاری)</label>
-            <textarea id="ruleDescription" class="field-input" rows="2" placeholder="توضیح بیشتر..."></textarea>
-            <div class="row-gap" style="margin-top:8px">
-              <button id="ruleSave" class="btn-primary" style="flex:1" type="button">ذخیره</button>
-              <button id="ruleCancel" class="btn-secondary" type="button">انصراف</button>
-            </div>
+            <label class="field-label">توضیحات <small style="font-weight:400;color:var(--ink-muted)">(اختیاری)</small></label>
+            <textarea id="ruleDescription" class="field-input" rows="3" placeholder="توضیح بیشتر..."></textarea>
           </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">اسکن خبر / فید RSS</div>
-          <label class="field-label">آدرس خبر یا RSS</label>
-          <input type="url" id="scanUrl" class="field-input" placeholder="https://..." />
-          <label class="field-label">قوانین مورد بررسی</label>
-          <div id="scanRuleCheckboxes" class="checkboxes-list"></div>
-          <button id="scanBtn" class="btn-primary" style="margin-top:12px;width:100%" type="button">شروع اسکن</button>
-          <div id="scanStatus" class="status-bar"></div>
-          <div id="scanResults" class="scan-results"></div>
-        </div>
-
-        <div class="panel alerts-history-panel">
-          <div class="panel-title">تاریخچه هشدارها
-            <button id="refreshResults" class="btn-icon" title="بارگذاری مجدد" type="button">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-            </button>
+          <div class="rule-form-footer">
+            <button id="ruleSave" class="btn-primary" style="flex:1" type="button">ذخیره</button>
+            <button id="ruleCancel" class="btn-secondary" type="button">انصراف</button>
           </div>
-          <div id="alertHistory" class="alert-history-list"></div>
         </div>
       </div>
     </section>
@@ -309,6 +354,30 @@
 
   <!-- hidden collection value used by rag.js -->
   <input type="hidden" id="ragCollection" value="default_pdf" />
+
+  <!-- Docs Preview Modal -->
+  <div class="modal-backdrop docs-modal-backdrop" id="docsModalBackdrop" aria-hidden="true">
+    <div class="modal docs-modal" role="dialog" aria-modal="true" aria-labelledby="docsModalHeading">
+      <div class="modal-header docs-modal-header">
+        <div class="modal-icon docs-modal-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <ellipse cx="12" cy="12" rx="10" ry="6.5"/>
+            <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="docs-modal-heading-wrap">
+          <h2 id="docsModalHeading" class="docs-modal-eyebrow">اسناد مجموعه</h2>
+          <p class="modal-sub docs-modal-colname" id="docsModalTitle">—</p>
+        </div>
+        <button class="modal-close" id="docsModalClose" type="button" aria-label="بستن">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </div>
+      <div class="modal-body docs-modal-body" id="docsModalBody">
+        <!-- populated by rag.js -->
+      </div>
+    </div>
+  </div>
 
   <script src="js/api.js"></script>
   <script src="js/chat.js"></script>
