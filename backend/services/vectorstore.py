@@ -61,6 +61,31 @@ def _docs_path(collection: str) -> str:
     return os.path.join(_store_path(collection), "docs.pkl")
 
 
+def _meta_path(collection: str) -> str:
+    return os.path.join(_store_path(collection), "meta.json")
+
+
+def save_collection_meta(collection: str, display_name: str) -> None:
+    """Persist the original (possibly Persian) display name alongside the index."""
+    import json
+    path = _meta_path(collection)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"display_name": display_name}, f, ensure_ascii=False)
+
+
+def load_collection_meta(folder_name: str) -> dict:
+    """Load meta.json for a collection folder. Returns {} if not found."""
+    import json
+    path = os.path.join(STORE_BASE_DIR, folder_name, "meta.json")
+    if os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
 def collection_exists(collection: str) -> bool:
     p = _store_path(collection)
     return (
@@ -75,14 +100,19 @@ def delete_collection(collection: str) -> None:
         shutil.rmtree(p)
 
 
-def list_collections() -> List[str]:
+def list_collections() -> List[dict]:
+    """Return list of collections as dicts with 'id' (folder name) and 'display_name'."""
     if not os.path.isdir(STORE_BASE_DIR):
         return []
     result = []
     for d in os.listdir(STORE_BASE_DIR):
         p = os.path.join(STORE_BASE_DIR, d)
         if os.path.isdir(p) and os.path.isfile(os.path.join(p, "index.faiss")):
-            result.append(d)
+            meta = load_collection_meta(d)
+            result.append({
+                "id": d,
+                "display_name": meta.get("display_name") or d,
+            })
     return result
 
 
@@ -139,9 +169,11 @@ def build_vectorstore_from_pdfs(
     collection: str,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     chunk_overlap: int = DEFAULT_CHUNK_OVERLAP,
+    display_name: Optional[str] = None,
     progress_callback: ProgressCb = None,
     cancel_event: CancelEvent = None,
 ) -> Tuple[FAISS, int]:
+    display_name = display_name or collection   # use provided name (may be Persian), fallback to folder name
     collection = sanitize_collection_name(collection)
 
     def cb(pct: int, detail: str):
@@ -214,6 +246,8 @@ def build_vectorstore_from_pdfs(
 
     with open(_docs_path(collection), "wb") as f:
         pickle.dump(all_docs, f)
+
+    save_collection_meta(collection, display_name)
 
     cb(100, "ایندکس با موفقیت انجام شد ✅")
     return vs, len(all_docs)

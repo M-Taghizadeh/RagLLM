@@ -26,6 +26,7 @@ from services.vectorstore import (
     list_collections,
     collection_exists,
     sanitize_collection_name,
+    load_collection_meta,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_CHUNK_OVERLAP,
 )
@@ -56,6 +57,52 @@ class RagChatRequest(BaseModel):
 @router.get("/collections")
 def get_collections():
     return {"collections": list_collections()}
+
+
+@router.get("/collections/{collection}/documents")
+def get_collection_documents(collection: str):
+    """Return metadata for each source document in a collection (grouped from docs.pkl)."""
+    safe_col = sanitize_collection_name(collection)
+    if not collection_exists(safe_col):
+        raise HTTPException(404, detail=f"مجموعه '{collection}' پیدا نشد.")
+
+    docs = load_documents(safe_col)
+    if not docs:
+        return {"collection": safe_col, "documents": []}
+
+    # Group chunks by source_file
+    from collections import defaultdict
+    groups: dict[str, list] = defaultdict(list)
+    for doc in docs:
+        fname = doc.metadata.get("source_file") or doc.metadata.get("source") or "نامشخص"
+        fname = os.path.basename(fname)
+        groups[fname].append(doc)
+
+    result = []
+    for fname, chunks in groups.items():
+        # Determine file type
+        ext = os.path.splitext(fname)[1].lower()
+        file_type = "pdf" if ext == ".pdf" else "word" if ext in (".docx", ".doc") else "other"
+
+        # Page count — only meaningful for PDFs (page is int); Word docs have page=""
+        pages = [c.metadata.get("page") for c in chunks if isinstance(c.metadata.get("page"), int)]
+        page_count = (max(pages) + 1) if pages else None
+
+        # Preview: first ~300 chars of first chunk
+        preview = chunks[0].page_content[:300].strip() if chunks else ""
+
+        result.append({
+            "filename": fname,
+            "file_type": file_type,
+            "chunk_count": len(chunks),
+            "page_count": page_count,
+            "preview": preview,
+        })
+
+    # Sort: PDFs first, then alphabetically
+    result.sort(key=lambda x: (0 if x["file_type"] == "pdf" else 1, x["filename"].lower()))
+
+    return {"collection": safe_col, "document_count": len(result), "documents": result}
 
 
 @router.delete("/collections/{collection}")
@@ -134,6 +181,7 @@ async def index_pdfs_stream(request: Request):
                 safe_collection,
                 chunk_size,
                 chunk_overlap,
+                display_name=collection,
                 progress_callback=progress_cb,
                 cancel_event=cancel_event,
             )

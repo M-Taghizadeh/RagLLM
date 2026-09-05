@@ -111,6 +111,7 @@
   function renderDropdown(collections) {
     collectionsData = collections;
     dropList$.innerHTML = "";
+    collectionSel$.innerHTML = "";
 
     if (!collections.length) {
       const empty = document.createElement("li");
@@ -120,23 +121,54 @@
       return;
     }
 
-    collections.forEach(c => {
+    collections.forEach(col => {
+      // Support both old string format and new {id, display_name} object
+      const id          = (typeof col === "object") ? col.id          : col;
+      const displayName = (typeof col === "object") ? col.display_name : col;
+
       const li = document.createElement("li");
-      li.dataset.value = c;
+      li.dataset.value = id;
       li.innerHTML = `
         <span class="col-icon">
           <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M3 3h4l1 2h5v8H3z"/>
           </svg>
         </span>
-        <span>${escHtml(c)}</span>`;
-      if (collectionIn$.value === c) li.classList.add("selected");
-      li.addEventListener("click", () => selectCollection(c, c));
+        <span class="col-name">${escHtml(displayName)}</span>
+        <span class="col-actions">
+          <button class="col-action-btn col-preview-btn" title="مشاهده اسناد" type="button" aria-label="مشاهده اسناد ${escHtml(displayName)}">
+            <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <ellipse cx="10" cy="10" rx="8" ry="5"/>
+              <circle cx="10" cy="10" r="2.5" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <button class="col-action-btn col-delete-btn" title="حذف مجموعه" type="button" aria-label="حذف ${escHtml(displayName)}">
+            <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/>
+              <path d="M3 5h14M8 5V3h4v2"/>
+            </svg>
+          </button>
+        </span>`;
+      if (collectionIn$.value === id) li.classList.add("selected");
+      li.addEventListener("click", (e) => {
+        if (e.target.closest(".col-actions")) return;
+        selectCollection(id, displayName);
+      });
+      li.querySelector(".col-preview-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeDropdown();
+        openDocsModal(id, displayName);
+      });
+      li.querySelector(".col-delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        confirmDeleteCollection(id, displayName, li);
+      });
       dropList$.appendChild(li);
 
-      // keep native select in sync for rag.js references
+      // keep native select in sync
       const opt = document.createElement("option");
-      opt.value = opt.textContent = c;
+      opt.value = id;
+      opt.textContent = displayName;
       collectionSel$.appendChild(opt);
     });
   }
@@ -260,6 +292,155 @@
 
   // ── Collections list ─────────────────────────────────────────────
 
+  async function confirmDeleteCollection(collection, displayName, liEl) {
+    // Swap the li content for an inline confirm row
+    const original = liEl.innerHTML;
+    liEl.innerHTML = `
+      <span class="col-delete-confirm-text">حذف «${escHtml(displayName || collection)}»؟</span>
+      <span class="col-actions">
+        <button class="col-action-btn col-confirm-yes" type="button" title="بله، حذف شود">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 10l5 5 7-7"/></svg>
+        </button>
+        <button class="col-action-btn col-confirm-no" type="button" title="انصراف">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </span>`;
+
+    liEl.querySelector(".col-confirm-no").addEventListener("click", (e) => {
+      e.stopPropagation();
+      liEl.innerHTML = original;
+      reattachLiEvents(liEl, collection, displayName);
+    });
+
+    liEl.querySelector(".col-confirm-yes").addEventListener("click", async (e) => {
+      e.stopPropagation();
+      liEl.style.opacity = "0.5";
+      liEl.style.pointerEvents = "none";
+      try {
+        await apiDelete(`/rag/collections/${encodeURIComponent(collection)}`);
+        // If deleted collection was selected, reset
+        if (collectionIn$.value === collection) {
+          collectionIn$.value = "";
+          dropLabel$.textContent = "انتخاب مجموعه";
+        }
+        liEl.remove();
+        // Refresh full list to keep collectionsData in sync
+        await loadCollections();
+        setStatus(status$, `✅ مجموعه «${displayName || collection}» حذف شد.`, "ok");
+      } catch (err) {
+        liEl.style.opacity = "";
+        liEl.style.pointerEvents = "";
+        liEl.innerHTML = original;
+        reattachLiEvents(liEl, collection, displayName);
+        setStatus(status$, `❌ خطا در حذف: ${err.message || err}`, "error");
+      }
+    });
+  }
+
+  function reattachLiEvents(li, id, displayName) {
+    li.addEventListener("click", (e) => {
+      if (e.target.closest(".col-actions")) return;
+      selectCollection(id, displayName);
+    });
+    li.querySelector(".col-preview-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeDropdown();
+      openDocsModal(id, displayName);
+    });
+    li.querySelector(".col-delete-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      confirmDeleteCollection(id, displayName, li);
+    });
+  }
+
+  // ── Docs Preview Modal ───────────────────────────────────────────
+
+  const docsModalBackdrop$ = document.getElementById("docsModalBackdrop");
+  const docsModalClose$    = document.getElementById("docsModalClose");
+  const docsModalTitle$    = document.getElementById("docsModalTitle");
+  const docsModalBody$     = document.getElementById("docsModalBody");
+
+  function openDocsModal(collection, displayName) {
+    docsModalTitle$.textContent = displayName || collection;
+    docsModalBody$.innerHTML = `<div class="docs-modal-loading"><span class="docs-spinner"></span>در حال بارگذاری...</div>`;
+    docsModalBackdrop$.classList.add("open");
+    docsModalBackdrop$.removeAttribute("aria-hidden");
+
+    apiGet(`/rag/collections/${encodeURIComponent(collection)}/documents`)
+      .then(data => renderDocsModal(data))
+      .catch(err => {
+        docsModalBody$.innerHTML = `<div class="docs-modal-error">❌ خطا در بارگذاری: ${escHtml(String(err.message || err))}</div>`;
+      });
+  }
+
+  function closeDocsModal() {
+    docsModalBackdrop$.classList.remove("open");
+    docsModalBackdrop$.setAttribute("aria-hidden", "true");
+  }
+
+  function renderDocsModal(data) {
+    const docs = data.documents || [];
+    if (!docs.length) {
+      docsModalBody$.innerHTML = `<div class="docs-modal-empty">هیچ سندی در این مجموعه یافت نشد.</div>`;
+      return;
+    }
+
+    docsModalBody$.innerHTML = "";
+
+    // Summary bar
+    const summary = document.createElement("div");
+    summary.className = "docs-summary";
+    summary.innerHTML = `
+      <span class="docs-summary-badge">${docs.length} سند</span>
+      <span class="docs-summary-badge secondary">${docs.reduce((s, d) => s + d.chunk_count, 0).toLocaleString("fa")} قطعه</span>`;
+    docsModalBody$.appendChild(summary);
+
+    docs.forEach(doc => {
+      const card = document.createElement("div");
+      card.className = "doc-card";
+
+      const isPdf  = doc.file_type === "pdf";
+      const isWord = doc.file_type === "word";
+      const typeIcon = isPdf
+        ? `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`;
+
+      const typeBadge = isPdf ? "PDF" : isWord ? "Word" : "فایل";
+      const typeCls   = isPdf ? "badge-pdf" : isWord ? "badge-word" : "badge-other";
+
+      const metaParts = [];
+      if (doc.page_count != null) metaParts.push(`${doc.page_count} صفحه`);
+      metaParts.push(`${doc.chunk_count} قطعه`);
+
+      const preview = doc.preview
+        ? `<div class="doc-preview-text">${escHtml(doc.preview)}${doc.preview.length >= 300 ? "…" : ""}</div>`
+        : "";
+
+      card.innerHTML = `
+        <div class="doc-card-header">
+          <span class="doc-icon ${isPdf ? "doc-icon-pdf" : "doc-icon-word"}">${typeIcon}</span>
+          <div class="doc-card-info">
+            <div class="doc-filename" title="${escHtml(doc.filename)}">${escHtml(doc.filename)}</div>
+            <div class="doc-meta">
+              <span class="doc-badge ${typeCls}">${typeBadge}</span>
+              ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
+            </div>
+          </div>
+        </div>
+        ${preview}`;
+
+      docsModalBody$.appendChild(card);
+    });
+  }
+
+  docsModalClose$.addEventListener("click", closeDocsModal);
+  docsModalBackdrop$.addEventListener("click", e => {
+    if (e.target === docsModalBackdrop$) closeDocsModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && docsModalBackdrop$.classList.contains("open")) closeDocsModal();
+  });
+
   async function loadCollections() {
     try {
       const data = await apiGet("/rag/collections");
@@ -336,8 +517,10 @@
                 setStatus(status$, msg, "ok");
                 selectedFiles = []; renderFileList();
                 collectionIn$.value = realName;
-                dropLabel$.textContent = realName;
-                loadCollections();
+                loadCollections().then(() => {
+                  const match = collectionsData.find(col => (typeof col === "object" ? col.id : col) === realName);
+                  dropLabel$.textContent = match ? (match.display_name || match.id || realName) : realName;
+                });
                 finalizeIndex(); return;
               }
               if (p.cancelled) {
