@@ -3,6 +3,7 @@
 **/__pycache__/
 *.pyc
 .Python
+.ipynb_checkpoints
 
 # Runtime data
 backend/faiss_db/
@@ -23,3 +24,6 @@ Thumbs.db
 .env
 
 dev/
+hybrid_rag_llm.ipynb
+faiss_db_cli/
+docs/
