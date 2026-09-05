@@ -15,6 +15,7 @@ import shutil
 import hashlib
 import pickle
 import threading
+from pathlib import Path
 from typing import List, Tuple, Callable, Optional
 
 import numpy as np
@@ -29,12 +30,17 @@ from services.embeddings import BGEEmbeddings
 
 STORE_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "faiss_db")
 
-ProgressCb = Optional[Callable[[int, str], None]]
-CancelEvent = Optional[threading.Event]
+# Load .env from project root
+_env_path = Path(__file__).resolve().parents[2] / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
 
-# Better defaults for Persian / long-form PDFs
-DEFAULT_CHUNK_SIZE = 1000
-DEFAULT_CHUNK_OVERLAP = 150
+DEFAULT_CHUNK_SIZE    = int(os.environ.get("CHUNK_SIZE", "1000"))
+DEFAULT_CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "150"))
 
 
 def sanitize_collection_name(name: str) -> str:

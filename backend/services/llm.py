@@ -23,6 +23,7 @@ DEFAULT_MODEL      = os.environ.get("DEFAULT_MODEL", "qwen2.5:14b")
 DEFAULT_TOP_K      = int(os.environ.get("DEFAULT_TOP_K", "8"))
 DENSE_WEIGHT       = float(os.environ.get("DENSE_WEIGHT", "0.7"))
 SPARSE_WEIGHT      = float(os.environ.get("SPARSE_WEIGHT", "0.3"))
+DEFAULT_NUM_CTX    = int(os.environ.get("NUM_CTX", "8192"))
 
 # Cache: (base_url, model, temperature) -> ChatOllama
 _cache: dict = {}
@@ -53,15 +54,17 @@ def get_llm(
     base_url: str = DEFAULT_OLLAMA_URL,
     model: str = DEFAULT_MODEL,
     temperature: float = 0.3,
+    num_ctx: int = DEFAULT_NUM_CTX,
 ) -> ChatOllama:
     """Get a cached ChatOllama instance. Raises 503 if Ollama is down."""
     assert_ollama(base_url)
-    key = (base_url, model, temperature)
+    key = (base_url, model, temperature, num_ctx)
     if key not in _cache:
         _cache[key] = ChatOllama(
             base_url=base_url,
             model=model,
             temperature=temperature,
+            num_ctx=num_ctx,
         )
     return _cache[key]
 
