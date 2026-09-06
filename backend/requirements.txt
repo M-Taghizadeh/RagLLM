@@ -11,9 +11,11 @@ langchain-ollama
 langchain-text-splitters
 
 # --- Vector DB + hybrid retrieval ---
-# faiss-cpu برای محیط local و CPU Docker استفاده می‌شود.
-# در GPU Docker build، Dockerfile ابتدا faiss-gpu نصب می‌کند و این خط نادیده گرفته می‌شود.
-faiss-cpu
+# faiss را اینجا اضافه نکنید!
+# در Docker، Dockerfile مدیریت نصب faiss-cpu یا faiss-gpu را بر عهده دارد (بسته به USE_CUDA).
+# در محیط local:
+#   CPU:  pip install faiss-cpu
+#   GPU:  pip install faiss-gpu
 rank-bm25
 
 # --- Embeddings (BGE-M3 via sentence-transformers) ---

@@ -42,10 +42,12 @@ services:
       - "8000"
     env_file:
       - .env
+    environment:
+      - DB_PATH=/app/data/ragbot.db
     volumes:
       - ./models:/app/models:ro
       - faiss_data:/app/backend/faiss_db
-      - sqlite_data:/app/backend
+      - sqlite_data:/app/data
     networks:
       - ragbot_net
     extra_hosts:

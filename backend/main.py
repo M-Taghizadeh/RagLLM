@@ -18,7 +18,7 @@ from services.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K
 from starlette.formparsers import MultiPartParser
 MultiPartParser.max_part_size = 500 * 1024 * 1024  # 500 MB
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "ragbot.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "ragbot.db"))
 
 
 def init_db():

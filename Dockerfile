@@ -29,7 +29,8 @@ RUN pip install --upgrade pip && \
     else \
         pip install --no-cache-dir --prefix=/install \
             "torch==2.6.0" "torchvision==0.21.0" "torchaudio==2.6.0" \
-            --index-url https://download.pytorch.org/whl/cpu ; \
+            --index-url https://download.pytorch.org/whl/cpu && \
+        pip install --no-cache-dir --prefix=/install faiss-cpu ; \
     fi && \
     pip install --no-cache-dir --prefix=/install --no-deps sentence-transformers && \
     pip install --no-cache-dir --prefix=/install -r requirements.txt
