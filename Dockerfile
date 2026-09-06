@@ -23,14 +23,15 @@ COPY backend/requirements.txt ./requirements.txt
 RUN pip install --upgrade pip && \
     if [ "$USE_CUDA" = "1" ]; then \
         pip install --no-cache-dir --prefix=/install \
-            torch torchvision torchaudio \
+            "torch==2.6.0" "torchvision==0.21.0" "torchaudio==2.6.0" \
             --index-url https://download.pytorch.org/whl/${TORCH_CUDA_VERSION} && \
         pip install --no-cache-dir --prefix=/install faiss-gpu ; \
     else \
         pip install --no-cache-dir --prefix=/install \
-            torch torchvision torchaudio \
+            "torch==2.6.0" "torchvision==0.21.0" "torchaudio==2.6.0" \
             --index-url https://download.pytorch.org/whl/cpu ; \
     fi && \
+    pip install --no-cache-dir --prefix=/install --no-deps sentence-transformers && \
     pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ── Stage 2: runtime (همیشه python:slim — GPU از طریق nvidia runtime میاد) ──
