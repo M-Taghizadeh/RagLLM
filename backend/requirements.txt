@@ -11,12 +11,18 @@ langchain-ollama
 langchain-text-splitters
 
 # --- Vector DB + hybrid retrieval ---
+# faiss-cpu برای محیط local و CPU Docker استفاده می‌شود.
+# در GPU Docker build، Dockerfile ابتدا faiss-gpu نصب می‌کند و این خط نادیده گرفته می‌شود.
 faiss-cpu
 rank-bm25
 
 # --- Embeddings (BGE-M3 via sentence-transformers) ---
 sentence-transformers
-# torch  -- install separately with the correct CUDA build, see README "GPU Setup"
+# torch را اینجا اضافه نکنید!
+# در Docker، torch قبل از این فایل با index صحیح CUDA نصب می‌شود (Dockerfile).
+# در محیط local:
+#   CPU:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   GPU:  pip install torch --index-url https://download.pytorch.org/whl/cu124
 
 # --- PDF loading ---
 pypdf

@@ -1,0 +1,42 @@
+# ── Git & IDE ─────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.vscode/
+.idea/
+*.log
+
+# ── Python cache ──────────────────────────────────────────────────────────────
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/venv/
+**/.venv/
+**/*.egg-info/
+**/dist/
+**/build/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+*.ipynb
+.ipynb_checkpoints/
+
+# ── Runtime data (will be mounted as volumes) ─────────────────────────────────
+backend/faiss_db/
+backend/ragbot.db
+backend/tmp_test/
+
+# ── Large model weights (will be bind-mounted from host) ──────────────────────
+models/
+
+# ── Dev / docs / evaluation (not needed in image) ────────────────────────────
+dev/
+docs/
+faiss_db_cli/
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -27,3 +27,4 @@ dev/
 hybrid_rag_llm.ipynb
 faiss_db_cli/
 docs/
+nginx/
