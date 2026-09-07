@@ -1,4 +1,4 @@
-# ── RagBot v2 — Backend Dockerfile ──────────────────────────────────────────
+# ── RagBot v2 — Dockerfile ───────────────────────────────────────────────────
 # CPU:  docker compose up -d --build
 # GPU:  USE_CUDA=1 DOCKER_RUNTIME=nvidia docker compose up -d --build
 # ─────────────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir --prefix=/install --no-deps sentence-transformers && \
     pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# ── Stage 2: runtime (همیشه python:slim — GPU از طریق nvidia runtime میاد) ──
+# ── Stage 2: runtime ─────────────────────────────────────────────────────────
 FROM python:${PYTHON_VERSION}-slim AS final
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -45,16 +45,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /install /usr/local
 
 LABEL maintainer="RagBot"
-LABEL description="RagBot v2 — Hybrid RAG with FAISS + BGE-M3 + Ollama"
+LABEL description="RagBot v2 — Hybrid RAG + Auth + PostgreSQL"
 
 WORKDIR /app
 
 COPY backend/  ./backend/
 COPY frontend/ ./frontend/
+
+# اگر scripts/ وجود داشت کپی کن (اختیاری)
 COPY scripts/  ./scripts/
 
-RUN mkdir -p ./models/bge-m3 ./backend/faiss_db ./data \
- && chmod -R 755 ./backend
+# ساخت دایرکتوری‌های لازم
+RUN mkdir -p \
+    ./models/bge-m3 \
+    ./backend/faiss_db \
+    ./data \
+    ./data/uploads \
+    && chmod -R 755 ./backend ./data
 
 RUN useradd -m -u 1000 ragbot \
  && chown -R ragbot:ragbot /app
@@ -62,7 +69,7 @@ USER ragbot
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 WORKDIR /app/backend

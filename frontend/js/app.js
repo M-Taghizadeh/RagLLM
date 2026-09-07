@@ -1,10 +1,27 @@
 /**
- * app.js — global navigation, settings wiring, model loader
+ * app.js — global navigation, settings wiring, model loader, user bar
  */
 
 (function () {
 
-  // ── Section navigation ───────────────────────────────────────────
+  // ── User bar ────────────────────────────────────────────────────────────────
+  const userAvatar$      = document.getElementById("userAvatar");
+  const userDisplayName$ = document.getElementById("userDisplayName");
+  const userRoleBadge$   = document.getElementById("userRoleBadge");
+  const logoutBtn$       = document.getElementById("logoutBtn");
+  const navUsers$        = document.getElementById("navUsers");
+
+  (function initUserBar() {
+    const name = Auth.getDisplayName() || Auth.getUsername();
+    userDisplayName$.textContent = name;
+    userAvatar$.textContent      = name.charAt(0).toUpperCase() || "U";
+    userRoleBadge$.textContent   = Auth.isAdmin() ? "مدیر سیستم" : "کاربر";
+    if (Auth.isAdmin() && navUsers$) navUsers$.style.display = "flex";
+  })();
+
+  logoutBtn$.addEventListener("click", () => Auth.logout());
+
+  // ── Section navigation ─────────────────────────────────────────────────────
   const navItems  = document.querySelectorAll(".nav-item");
   const sections  = document.querySelectorAll(".section");
   const sidebar$  = document.getElementById("sidebar");
@@ -17,6 +34,8 @@
       sections.forEach(s => s.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(`section-${target}`).classList.add("active");
+      // Notify modules that a section was activated
+      document.dispatchEvent(new CustomEvent("sectionActivated", { detail: { section: target } }));
       // close sidebar on mobile
       if (window.innerWidth <= 768) sidebar$.classList.remove("open");
     });

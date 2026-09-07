@@ -19,7 +19,10 @@ from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_UR
 
 router = APIRouter()
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "ragbot.db")
+DB_PATH = os.environ.get(
+    "DB_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "ragbot.db"),
+)
 
 
 def get_db():

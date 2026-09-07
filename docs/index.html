@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مستندات سامانه RagBot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary:   #4F6EF7;
+      --primary-dark: #3A54D4;
+      --secondary: #10B981;
+      --accent:    #F59E0B;
+      --danger:    #EF4444;
+      --bg:        #0F1117;
+      --bg-card:   #1A1D2E;
+      --bg-card2:  #212440;
+      --border:    #2E3250;
+      --text:      #E2E8F0;
+      --text-muted:#8892B0;
+      --code-bg:   #141622;
+      --get:       #10B981;
+      --post:      #4F6EF7;
+      --delete:    #EF4444;
+      --put:       #F59E0B;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; right: 0;
+      width: 260px;
+      height: 100vh;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 100;
+      padding: 24px 0;
+    }
+
+    .nav-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .nav-logo h2 {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-logo span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      padding: 8px 20px 4px;
+      margin-top: 8px;
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      border-right: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--text);
+      border-right-color: var(--primary);
+      background: rgba(79, 110, 247, 0.08);
+    }
+
+    nav a .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* ─── MAIN ─── */
+    main {
+      margin-right: 260px;
+      padding: 0 48px 80px;
+      max-width: 1100px;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 80px 0 60px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 60px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(79, 110, 247, 0.15);
+      border: 1px solid rgba(79, 110, 247, 0.3);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 30%, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 680px;
+      line-height: 1.8;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .tag {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    .tag.green { color: var(--secondary); border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.08); }
+    .tag.blue  { color: var(--primary);   border-color: rgba(79, 110, 247, 0.3); background: rgba(79, 110, 247, 0.08); }
+    .tag.amber { color: var(--accent);    border-color: rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.08); }
+
+    /* ─── SECTION ─── */
+    section {
+      margin-bottom: 72px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .section-icon.blue   { background: rgba(79, 110, 247, 0.15); }
+    .section-icon.green  { background: rgba(16, 185, 129, 0.15); }
+    .section-icon.amber  { background: rgba(245, 158, 11, 0.15); }
+    .section-icon.purple { background: rgba(139, 92, 246, 0.15); }
+    .section-icon.red    { background: rgba(239, 68, 68, 0.15); }
+    .section-icon.cyan   { background: rgba(6, 182, 212, 0.15); }
+    .section-icon.pink   { background: rgba(236, 72, 153, 0.15); }
+
+    .section-header h2 {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .section-header .section-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ─── GOAL CARDS ─── */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .goal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .goal-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+    .goal-card .goal-icon { font-size: 28px; margin-bottom: 12px; }
+    .goal-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .goal-card p  { font-size: 13.5px; color: var(--text-muted); line-height: 1.7; }
+
+    /* ─── FEATURE LIST ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .feature-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .feature-item .fi-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .feature-item h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .feature-item p  { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── MERMAID DIAGRAM ─── */
+    .diagram-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 24px;
+      overflow-x: auto;
+    }
+
+    .diagram-wrap .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    .diagram-label {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    /* ─── TECH TABLE ─── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .tech-row {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tech-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'Courier New', monospace;
+    }
+
+    .tech-desc { font-size: 13px; color: var(--text-muted); }
+
+    /* ─── API ENDPOINT ─── */
+    .endpoint-group {
+      margin-bottom: 40px;
+    }
+
+    .endpoint-group-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      background: var(--bg-card2);
+      border-radius: 8px;
+      border-right: 4px solid var(--primary);
+    }
+
+    .endpoint {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .endpoint-header:hover { background: rgba(255,255,255,0.03); }
+
+    .method-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .method-badge.GET    { background: rgba(16, 185, 129, 0.15); color: var(--get); border: 1px solid rgba(16,185,129,0.3); }
+    .method-badge.POST   { background: rgba(79, 110, 247, 0.15); color: var(--post); border: 1px solid rgba(79,110,247,0.3); }
+    .method-badge.DELETE { background: rgba(239, 68, 68, 0.15);  color: var(--delete); border: 1px solid rgba(239,68,68,0.3); }
+    .method-badge.PUT    { background: rgba(245, 158, 11, 0.15); color: var(--put); border: 1px solid rgba(245,158,11,0.3); }
+
+    .endpoint-path {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .endpoint-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .endpoint-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .endpoint-body {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .endpoint.open .endpoint-body  { display: block; }
+    .endpoint.open .endpoint-arrow { transform: rotate(180deg); }
+
+    .endpoint-body p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin: 14px 0 10px;
+    }
+
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .params-table th {
+      background: var(--code-bg);
+      padding: 8px 12px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .params-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(46, 50, 80, 0.5);
+      vertical-align: top;
+    }
+
+    .params-table tr:last-child td { border-bottom: none; }
+
+    .params-table .param-name {
+      font-family: 'Courier New', monospace;
+      color: var(--accent);
+      font-size: 12.5px;
+    }
+
+    .params-table .param-type {
+      font-family: 'Courier New', monospace;
+      color: var(--secondary);
+      font-size: 12px;
+    }
+
+    .params-table .param-default {
+      font-family: 'Courier New', monospace;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .sse-events {
+      margin-top: 12px;
+      background: var(--code-bg);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12.5px;
+      font-family: 'Courier New', monospace;
+      color: var(--text-muted);
+      line-height: 2;
+    }
+
+    .sse-events .sse-label {
+      color: var(--text-muted);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .sse-event { color: var(--secondary); }
+    .sse-arrow { color: var(--text-muted); }
+
+    /* ─── HYBRID RAG ─── */
+    .rag-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .rag-step {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 32px;
+      position: relative;
+    }
+
+    .rag-step:last-child { padding-bottom: 0; }
+
+    .rag-step-num {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+
+    .rag-step::before {
+      content: '';
+      position: absolute;
+      right: 19px;
+      top: 40px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--border), transparent);
+    }
+
+    .rag-step:last-child::before { display: none; }
+
+    .rag-step-content {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+
+    .rag-step-content h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .rag-step-content p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .rag-step-content .code-inline {
+      background: var(--code-bg);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px;
+      color: var(--secondary);
+      margin-top: 10px;
+      display: block;
+      line-height: 1.8;
+    }
+
+    /* ─── INFO BOXES ─── */
+    .info-box {
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin: 16px 0;
+      font-size: 13.5px;
+      border-right: 4px solid;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .info-box.blue   { background: rgba(79,110,247,0.08); border-color: var(--primary); color: #a5b4fc; }
+    .info-box.green  { background: rgba(16,185,129,0.08); border-color: var(--secondary); color: #6ee7b7; }
+    .info-box.amber  { background: rgba(245,158,11,0.08); border-color: var(--accent); color: #fcd34d; }
+    .info-box .ib-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* ─── RRF FORMULA ─── */
+    .formula-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      text-align: center;
+      font-size: 16px;
+      font-family: 'Courier New', monospace;
+      color: var(--secondary);
+      margin: 16px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .formula-box .formula-label {
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* ─── DB TABLES ─── */
+    .db-tables {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 20px;
+    }
+
+    .db-table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .db-table-header {
+      background: var(--bg-card2);
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .db-table-header .tbl-icon { font-size: 18px; }
+
+    .db-col {
+      display: grid;
+      grid-template-columns: 160px 90px 1fr;
+      gap: 10px;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(46,50,80,0.5);
+      font-size: 13px;
+      align-items: center;
+    }
+
+    .db-col:last-child { border-bottom: none; }
+    .db-col .col-name { font-family: 'Courier New', monospace; color: var(--accent); }
+    .db-col .col-type { font-family: 'Courier New', monospace; color: var(--secondary); font-size: 12px; }
+    .db-col .col-desc { color: var(--text-muted); }
+
+    .pk-badge {
+      background: rgba(245,158,11,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(245,158,11,0.3);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+
+    .fk-badge {
+      background: rgba(79,110,247,0.15);
+      color: var(--primary);
+      border: 1px solid rgba(79,110,247,0.3);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      margin-right: 260px;
+      padding: 32px 48px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      nav { display: none; }
+      main { margin-right: 0; padding: 0 20px 60px; }
+      footer { margin-right: 0; padding: 24px 20px; }
+      .hero h1 { font-size: 32px; }
+      .db-tables { grid-template-columns: 1fr; }
+      .db-col { grid-template-columns: 130px 80px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ NAV ═══════ -->
+<nav>
+  <div class="nav-logo">
+    <h2>RagBot</h2>
+    <span>مستندات فنی — نسخه ۴.۰.۰</span>
+  </div>
+
+  <div class="nav-section-title">کلیات</div>
+  <a href="#goals"><span class="nav-icon">🎯</span> اهداف پروژه</a>
+  <a href="#features"><span class="nav-icon">⚡</span> قابلیت‌های سامانه</a>
+
+  <div class="nav-section-title">نمودارها</div>
+  <a href="#workflow"><span class="nav-icon">🔄</span> جریان کاری</a>
+  <a href="#architecture"><span class="nav-icon">🏗️</span> معماری فنی</a>
+  <a href="#database"><span class="nav-icon">🗄️</span> پایگاه داده</a>
+
+  <div class="nav-section-title">پیاده‌سازی</div>
+  <a href="#tech"><span class="nav-icon">🛠️</span> تکنولوژی‌ها</a>
+  <a href="#api"><span class="nav-icon">📡</span> API های بک‌اند</a>
+  <a href="#hybrid-rag"><span class="nav-icon">🧠</span> معماری Hybrid RAG</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════ MAIN ════════ -->
+<main>
+
+  <!-- ─── HERO ─── -->
+  <div class="hero">
+    <div class="hero-badge">📄 مستندات فنی</div>
+    <h1>سامانه هوشمند RagBot</h1>
+    <p>
+      یک سیستم RAG کاملاً محلی و حریم‌خصوصی‌محور برای پردازش اسناد، مقالات و خبرها با استفاده از مدل‌های زبانی بزرگ و معماری هیبرید بازیابی اطلاعات.
+    </p>
+    <div class="hero-tags">
+      <span class="tag blue">FastAPI</span>
+      <span class="tag green">BGE-M3</span>
+      <span class="tag amber">Ollama + Qwen2.5</span>
+      <span class="tag green">FAISS + BM25</span>
+      <span class="tag blue">Hybrid RAG</span>
+      <span class="tag">SQLite</span>
+      <span class="tag green">100% Local</span>
+      <span class="tag amber">پشتیبانی از فارسی</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ١. اهداف پروژه
+  ══════════════════════════════════════════════════════ -->
+  <section id="goals">
+    <div class="section-header">
+      <div class="section-icon blue">🎯</div>
+      <div>
+        <h2>اهداف پروژه</h2>
+        <div class="section-sub">چرا RagBot ساخته شد و چه مسئله‌ای را حل می‌کند</div>
+      </div>
+    </div>
+
+    <div class="goals-grid">
+      <div class="goal-card">
+        <div class="goal-icon">🔒</div>
+        <h3>حریم خصوصی کامل</h3>
+        <p>هیچ داده‌ای به سرورهای خارجی ارسال نمی‌شود. تمام پردازش‌ها به‌صورت محلی انجام می‌گیرد — بدون API Cloud، بدون نشت داده.</p>
+      </div>
+      <div class="goal-card">
+        <div class="goal-icon">📚</div>
+        <h3>پرسش از اسناد</h3>
+        <p>امکان بارگذاری فایل‌های PDF و Word و مکالمه هوشمند با آن‌ها با ارائه منابع دقیق و شماره صفحه.</p>
+      </div>
+      <div class="goal-card">
+        <div class="goal-icon">🌐</div>
+        <h3>تحلیل مقالات وب</h3>
+        <p>Crawl هر URL دلخواه و مکالمه زنده با محتوای آن — بدون نیاز به کپی‌پیست دستی.</p>
+      </div>
+      <div class="goal-card">
+        <div class="goal-icon">🔔</div>
+        <h3>هشدار خبری هوشمند</h3>
+        <p>تعریف قوانین کلیدواژه‌ای و اسکن خودکار خبرگزاری‌ها و فیدهای RSS با LLM برای پیدا کردن اخبار مرتبط.</p>
+      </div>
+      <div class="goal-card">
+        <div class="goal-icon">🌍</div>
+        <h3>پشتیبانی چندزبانه</h3>
+        <p>مدل embedding بکار رفته (BGE-M3) از بیش از ۱۰۰ زبان پشتیبانی می‌کند، با تمرکز ویژه بر زبان فارسی.</p>
+      </div>
+      <div class="goal-card">
+        <div class="goal-icon">⚡</div>
+        <h3>دقت بازیابی بالا</h3>
+        <p>ترکیب جستجوی معنایی (Dense) و کلیدواژه‌ای (Sparse) با الگوریتم RRF برای بالاترین دقت در یافتن اطلاعات مرتبط.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٢. قابلیت‌های سامانه
+  ══════════════════════════════════════════════════════ -->
+  <section id="features">
+    <div class="section-header">
+      <div class="section-icon green">⚡</div>
+      <div>
+        <h2>قابلیت‌های سامانه</h2>
+        <div class="section-sub">ماژول‌ها و امکانات اصلی RagBot</div>
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="fi-icon blue">💬</div>
+        <div>
+          <h4>چت هوشمند با LLM</h4>
+          <p>مکالمه جاری با مدل‌های Ollama به‌صورت streaming با نگهداری تاریخچه ۶ پیام اخیر.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon green">📄</div>
+        <div>
+          <h4>ایندکس PDF / Word</h4>
+          <p>بارگذاری فایل‌های PDF و DOCX، تقسیم‌بندی هوشمند و ساخت وکتوراستور FAISS با قابلیت لغو.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon purple">🔍</div>
+        <div>
+          <h4>بازیابی هیبرید</h4>
+          <p>ترکیب BGE-M3 Dense + BM25 Sparse با Reciprocal Rank Fusion برای بهترین نتیجه.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon cyan">🌐</div>
+        <div>
+          <h4>Crawl مقاله</h4>
+          <p>دریافت و تحلیل محتوای هر URL با BeautifulSoup، محدود به ۱۲,۰۰۰ کاراکتر اول.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon amber">🔔</div>
+        <div>
+          <h4>هشدار خبری</h4>
+          <p>اسکن خودکار سایت‌ها و RSS Feed با LLM با دمای ۰.۰ برای تشخیص قطعی تطابق.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon red">🌍</div>
+        <div>
+          <h4>جستجوی وب</h4>
+          <p>یکپارچه‌سازی با DuckDuckGo برای افزودن اطلاعات به‌روز به پاسخ LLM.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon green">📦</div>
+        <div>
+          <h4>مدیریت Collection</h4>
+          <p>ایجاد، مشاهده و حذف کالکشن‌های مستقل با FAISS ذخیره‌شده روی دیسک.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon blue">⚡</div>
+        <div>
+          <h4>Streaming SSE</h4>
+          <p>تمام پاسخ‌ها به‌صورت Server-Sent Events جریان می‌یابند — بدون تاخیر انتظار کامل.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon purple">🔗</div>
+        <div>
+          <h4>منابع دقیق</h4>
+          <p>نمایش فایل مبدأ، شماره صفحه و پیش‌نمایش متن برای هر بخش بازیابی‌شده.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٣. نمودار جریان کاری
+  ══════════════════════════════════════════════════════ -->
+  <section id="workflow">
+    <div class="section-header">
+      <div class="section-icon amber">🔄</div>
+      <div>
+        <h2>نمودار جریان کاری سامانه</h2>
+        <div class="section-sub">مسیر پردازش درخواست کاربر از ابتدا تا پاسخ</div>
+      </div>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+flowchart TD
+    U([👤 کاربر]) --> |ارسال درخواست| API[FastAPI Backend]
+
+    API --> M{نوع ماژول؟}
+
+    M --> |Chat| CH[🗨️ Chat Router]
+    M --> |RAG PDF| RG[📄 RAG Router]
+    M --> |Article| AR[🌐 Article Router]
+    M --> |Alerts| AL[🔔 Alerts Router]
+
+    CH --> |use_web=true| WS[🌍 DuckDuckGo Search]
+    CH --> LLM[🤖 ChatOllama]
+    WS --> LLM
+
+    RG --> |فایل جدید| IDX[📦 Indexer]
+    IDX --> EMB[🔢 BGE-M3 Embeddings]
+    EMB --> FAISS[(🗄️ FAISS Index)]
+    FAISS --> |ذخیره دیسک| DISK[(💾 faiss_db/)]
+
+    RG --> |سوال| RET[🔍 HybridRetriever]
+    RET --> DENSE[Dense: FAISS Similarity]
+    RET --> SPARSE[Sparse: BM25]
+    DENSE --> RRF[⚖️ RRF Fusion]
+    SPARSE --> RRF
+    RRF --> CTX[📝 Context Builder]
+    CTX --> LLM
+
+    AR --> CRL[🕷️ Crawler]
+    CRL --> |متن مقاله| LLM
+
+    AL --> CRL2[🕷️ Crawler / RSS]
+    CRL2 --> LLMC[🤖 ChatOllama<br/>temp=0.0]
+    LLMC --> DB[(🗄️ SQLite)]
+
+    LLM --> |SSE Streaming| U
+
+    style U fill:#4F6EF7,color:#fff,stroke:none
+    style LLM fill:#8B5CF6,color:#fff,stroke:none
+    style FAISS fill:#10B981,color:#fff,stroke:none
+    style DB fill:#10B981,color:#fff,stroke:none
+    style RRF fill:#F59E0B,color:#fff,stroke:none
+    style EMB fill:#06B6D4,color:#fff,stroke:none
+      </div>
+      <p class="diagram-label">نمودار جریان کلی سامانه — از درخواست کاربر تا پاسخ نهایی</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٤. معماری فنی
+  ══════════════════════════════════════════════════════ -->
+  <section id="architecture">
+    <div class="section-header">
+      <div class="section-icon purple">🏗️</div>
+      <div>
+        <h2>نمودار معماری فنی سامانه</h2>
+        <div class="section-sub">لایه‌بندی اجزا و ارتباط بین سرویس‌ها</div>
+      </div>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+graph TB
+    subgraph CLIENT["🌐 لایه کلاینت"]
+        FE[HTML/CSS/JS<br/>RTL Frontend]
+    end
+
+    subgraph API_LAYER["⚡ لایه API — FastAPI"]
+        R1[/api/chat]
+        R2[/api/rag]
+        R3[/api/article]
+        R4[/api/alerts]
+        R5[/api/health<br/>/api/config]
+    end
+
+    subgraph SERVICES["🔧 لایه سرویس‌ها"]
+        LLM_SVC[llm.py<br/>ChatOllama Cache]
+        EMB_SVC[embeddings.py<br/>BGE-M3 Singleton]
+        VS_SVC[vectorstore.py<br/>FAISS Manager]
+        RET_SVC[retrieval.py<br/>HybridRetriever]
+        RAG_SVC[rag_chain.py<br/>RAG Pipeline]
+        CRL_SVC[crawler.py<br/>HTTP + RSS]
+        WEB_SVC[web_search.py<br/>DuckDuckGo]
+    end
+
+    subgraph STORAGE["💾 لایه ذخیره‌سازی"]
+        FAISS_DB[(FAISS<br/>faiss_db/)]
+        SQLITE_DB[(SQLite<br/>ragbot.db)]
+        MEMORY[(In-Memory<br/>Chat History)]
+        MODEL_FS[(models/<br/>bge-m3/)]
+    end
+
+    subgraph EXTERNAL["🔌 سرویس‌های خارجی محلی"]
+        OLLAMA[Ollama Server<br/>:11434]
+        DDG[DuckDuckGo<br/>DDGS API]
+    end
+
+    FE <-->|SSE / REST| R1
+    FE <-->|SSE / REST| R2
+    FE <-->|SSE / REST| R3
+    FE <-->|SSE / REST| R4
+
+    R1 --> LLM_SVC
+    R1 --> WEB_SVC
+    R2 --> VS_SVC
+    R2 --> RET_SVC
+    R2 --> RAG_SVC
+    R3 --> CRL_SVC
+    R3 --> LLM_SVC
+    R4 --> CRL_SVC
+    R4 --> LLM_SVC
+    R4 --> SQLITE_DB
+
+    RAG_SVC --> RET_SVC
+    RAG_SVC --> LLM_SVC
+    RET_SVC --> VS_SVC
+    RET_SVC --> EMB_SVC
+    VS_SVC --> EMB_SVC
+    VS_SVC --> FAISS_DB
+    VS_SVC --> MEMORY
+    LLM_SVC --> OLLAMA
+    EMB_SVC --> MODEL_FS
+    WEB_SVC --> DDG
+
+    style CLIENT fill:#1A1D2E,stroke:#4F6EF7
+    style API_LAYER fill:#1A1D2E,stroke:#10B981
+    style SERVICES fill:#1A1D2E,stroke:#8B5CF6
+    style STORAGE fill:#1A1D2E,stroke:#F59E0B
+    style EXTERNAL fill:#1A1D2E,stroke:#EF4444
+      </div>
+      <p class="diagram-label">معماری لایه‌بندی شده سامانه — Client → API → Services → Storage</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٥. پایگاه داده
+  ══════════════════════════════════════════════════════ -->
+  <section id="database">
+    <div class="section-header">
+      <div class="section-icon red">🗄️</div>
+      <div>
+        <h2>نمودار پایگاه داده</h2>
+        <div class="section-sub">ساختار جداول SQLite و روابط بین آن‌ها</div>
+      </div>
+    </div>
+
+    <div class="diagram-wrap" style="margin-bottom: 24px;">
+      <div class="mermaid">
+erDiagram
+    alert_rules {
+        INTEGER id PK
+        TEXT name
+        TEXT category
+        TEXT keywords
+        TEXT description
+        DATETIME created_at
+    }
+
+    alert_results {
+        INTEGER id PK
+        INTEGER rule_id FK
+        TEXT source_url
+        TEXT title
+        TEXT excerpt
+        DATETIME matched_at
+    }
+
+    alert_rules ||--o{ alert_results : "rule_id (CASCADE DELETE)"
+      </div>
+      <p class="diagram-label">رابطه یک‌به‌چند بین قوانین هشدار و نتایج اسکن</p>
+    </div>
+
+    <div class="db-tables">
+      <div class="db-table-card">
+        <div class="db-table-header">
+          <span class="tbl-icon">📋</span>
+          alert_rules — قوانین هشدار
+        </div>
+        <div class="db-col">
+          <span class="col-name"><span class="pk-badge">PK</span>id</span>
+          <span class="col-type">INTEGER</span>
+          <span class="col-desc">شناسه یکتا خودافزا</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">name</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">نام قانون هشدار (الزامی)</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">category</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">دسته‌بندی قانون (الزامی)</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">keywords</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">کلیدواژه‌های جستجو (الزامی)</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">description</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">توضیحات اختیاری</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">created_at</span>
+          <span class="col-type">DATETIME</span>
+          <span class="col-desc">تاریخ ایجاد (پیش‌فرض: اکنون)</span>
+        </div>
+      </div>
+
+      <div class="db-table-card">
+        <div class="db-table-header">
+          <span class="tbl-icon">🔔</span>
+          alert_results — نتایج هشدار
+        </div>
+        <div class="db-col">
+          <span class="col-name"><span class="pk-badge">PK</span>id</span>
+          <span class="col-type">INTEGER</span>
+          <span class="col-desc">شناسه یکتا خودافزا</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name"><span class="fk-badge">FK</span>rule_id</span>
+          <span class="col-type">INTEGER</span>
+          <span class="col-desc">ارجاع به alert_rules (CASCADE DELETE)</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">source_url</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">آدرس منبع خبر</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">title</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">عنوان مقاله/خبر</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">excerpt</span>
+          <span class="col-type">TEXT</span>
+          <span class="col-desc">بخش مرتبط استخراج‌شده توسط LLM</span>
+        </div>
+        <div class="db-col">
+          <span class="col-name">matched_at</span>
+          <span class="col-type">DATETIME</span>
+          <span class="col-desc">زمان تطابق</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box blue" style="margin-top: 20px;">
+      <span class="ib-icon">💡</span>
+      <div>سایر داده‌های سامانه (وکتورهای FAISS، کورپوس BM25، تاریخچه چت و کش مقالات) به‌صورت فایل روی دیسک یا In-Memory ذخیره می‌شوند — نه در SQLite.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٦. تکنولوژی‌ها
+  ══════════════════════════════════════════════════════ -->
+  <section id="tech">
+    <div class="section-header">
+      <div class="section-icon cyan">🛠️</div>
+      <div>
+        <h2>تکنولوژی‌های سامانه</h2>
+        <div class="section-sub">کتابخانه‌ها، مدل‌ها و ابزارهای استفاده‌شده</div>
+      </div>
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech-row"><span class="tech-name">fastapi</span><span class="tech-desc">فریم‌ورک اصلی وب بک‌اند</span></div>
+      <div class="tech-row"><span class="tech-name">uvicorn</span><span class="tech-desc">ASGI server با پشتیبانی از WebSocket/SSE</span></div>
+      <div class="tech-row"><span class="tech-name">pydantic</span><span class="tech-desc">اعتبارسنجی و سریالایز داده‌ها</span></div>
+      <div class="tech-row"><span class="tech-name">langchain-ollama</span><span class="tech-desc">رابط ChatOllama برای مدل‌های محلی</span></div>
+      <div class="tech-row"><span class="tech-name">langchain-community</span><span class="tech-desc">BM25Retriever، loaderها و ابزارهای RAG</span></div>
+      <div class="tech-row"><span class="tech-name">Ollama</span><span class="tech-desc">سرور اجرای LLM محلی — پورت ۱۱۴۳۴</span></div>
+      <div class="tech-row"><span class="tech-name">qwen2.5:14b</span><span class="tech-desc">مدل زبانی پیش‌فرض (قابل تغییر)</span></div>
+      <div class="tech-row"><span class="tech-name">faiss-cpu</span><span class="tech-desc">وکتوراستور با IndexFlatIP (cosine)</span></div>
+      <div class="tech-row"><span class="tech-name">rank-bm25</span><span class="tech-desc">بازیابی sparse کلیدواژه‌ای TF-IDF</span></div>
+      <div class="tech-row"><span class="tech-name">sentence-transformers</span><span class="tech-desc">بارگذاری و اجرای مدل embedding محلی</span></div>
+      <div class="tech-row"><span class="tech-name">BAAI/bge-m3</span><span class="tech-desc">مدل embedding چندزبانه (≈۲ گیگابایت)</span></div>
+      <div class="tech-row"><span class="tech-name">torch</span><span class="tech-desc">پشتیبانی از GPU برای embedding (اختیاری)</span></div>
+      <div class="tech-row"><span class="tech-name">pypdf</span><span class="tech-desc">بارگذاری و پارس فایل‌های PDF</span></div>
+      <div class="tech-row"><span class="tech-name">docx2txt / python-docx</span><span class="tech-desc">خواندن اسناد Word</span></div>
+      <div class="tech-row"><span class="tech-name">beautifulsoup4</span><span class="tech-desc">پارس HTML برای Crawl مقالات</span></div>
+      <div class="tech-row"><span class="tech-name">feedparser</span><span class="tech-desc">پارس فیدهای RSS/Atom</span></div>
+      <div class="tech-row"><span class="tech-name">ddgs</span><span class="tech-desc">جستجوی DuckDuckGo بدون API Key</span></div>
+      <div class="tech-row"><span class="tech-name">sqlite3</span><span class="tech-desc">پایگاه داده رابطه‌ای سبک (stdlib)</span></div>
+      <div class="tech-row"><span class="tech-name">huggingface-hub</span><span class="tech-desc">دانلود مدل embedding از HuggingFace</span></div>
+      <div class="tech-row"><span class="tech-name">langchain-text-splitters</span><span class="tech-desc">تقسیم‌بندی متن با جداکننده‌های فارسی</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٧. API های بک‌اند
+  ══════════════════════════════════════════════════════ -->
+  <section id="api">
+    <div class="section-header">
+      <div class="section-icon pink">📡</div>
+      <div>
+        <h2>API های بک‌اند</h2>
+        <div class="section-sub">مستندات کامل endpoint های FastAPI</div>
+      </div>
+    </div>
+
+    <!-- ─ Chat ─ -->
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">💬 ماژول Chat — /api/chat</div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/chat/stream</span>
+          <span class="endpoint-desc">چت streaming با LLM از طریق SSE</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>ارسال پیام به LLM و دریافت پاسخ به‌صورت جریانی. با فعال کردن <code>use_web</code>، نتایج DuckDuckGo نیز به context اضافه می‌شوند.</p>
+          <table class="params-table">
+            <thead><tr><th>پارامتر</th><th>نوع</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">message</td><td class="param-type">str</td><td class="param-default">—</td><td>متن پیام کاربر (الزامی)</td></tr>
+              <tr><td class="param-name">session_id</td><td class="param-type">str</td><td class="param-default">"default"</td><td>شناسه session برای نگهداری تاریخچه</td></tr>
+              <tr><td class="param-name">model</td><td class="param-type">str</td><td class="param-default">env</td><td>نام مدل Ollama</td></tr>
+              <tr><td class="param-name">ollama_url</td><td class="param-type">str</td><td class="param-default">env</td><td>آدرس سرور Ollama</td></tr>
+              <tr><td class="param-name">temperature</td><td class="param-type">float</td><td class="param-default">0.3</td><td>دمای تولید متن (۰.۰ – ۱.۰)</td></tr>
+              <tr><td class="param-name">use_web</td><td class="param-type">bool</td><td class="param-default">false</td><td>فعال‌سازی جستجوی وب</td></tr>
+              <tr><td class="param-name">web_results</td><td class="param-type">int</td><td class="param-default">6</td><td>تعداد نتایج وب (۱–۲۰)</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">
+            <span class="sse-label">رویدادهای SSE به ترتیب:</span>
+            <span class="sse-event">{status, msg}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{token}</span> × N <span class="sse-arrow">→</span>
+            <span class="sse-event">{web_sources}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{done: true}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/chat/models</span>
+          <span class="endpoint-desc">دریافت لیست مدل‌های نصب‌شده Ollama</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>لیست مدل‌های موجود در سرور Ollama را برمی‌گرداند.</p>
+          <table class="params-table">
+            <thead><tr><th>پارامتر</th><th>نوع</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">ollama_url</td><td class="param-type">str</td><td>آدرس سرور Ollama</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">بازگشت: <span class="sse-event">{"models": ["qwen2.5:14b", ...]}</span></div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/chat/clear</span>
+          <span class="endpoint-desc">پاک کردن تاریخچه چت</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>تاریخچه مکالمه یک session را پاک می‌کند.</p>
+          <table class="params-table">
+            <thead><tr><th>پارامتر</th><th>محل</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">session_id</td><td class="param-type">Query</td><td>شناسه session برای پاک‌سازی</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ RAG ─ -->
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">📄 ماژول RAG — /api/rag</div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/rag/index/stream</span>
+          <span class="endpoint-desc">ایندکس کردن فایل‌ها با نمایش پیشرفت SSE</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>فایل‌های PDF / DOCX / DOC را دریافت کرده، آن‌ها را به chunks تبدیل و در FAISS ذخیره می‌کند. از ThreadPoolExecutor استفاده می‌کند تا event loop بلاک نشود. حداکثر حجم هر فایل ۵۰۰ مگابایت.</p>
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">files</td><td class="param-type">file(s)</td><td class="param-default">—</td><td>یک یا چند فایل PDF/DOCX (multipart)</td></tr>
+              <tr><td class="param-name">collection</td><td class="param-type">str</td><td class="param-default">"default_pdf"</td><td>نام collection برای ذخیره</td></tr>
+              <tr><td class="param-name">chunk_size</td><td class="param-type">int</td><td class="param-default">1000</td><td>تعداد کاراکتر هر chunk</td></tr>
+              <tr><td class="param-name">chunk_overlap</td><td class="param-type">int</td><td class="param-default">150</td><td>تداخل بین chunk های مجاور</td></tr>
+              <tr><td class="param-name">job_id</td><td class="param-type">str</td><td class="param-default">—</td><td>شناسه اختیاری برای قابلیت لغو</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">
+            <span class="sse-label">رویدادهای SSE:</span>
+            <span class="sse-event">{progress, detail}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{done, total_chunks, files, collection}</span>
+            <span class="sse-arrow"> | </span>
+            <span class="sse-event">{error}</span>
+            <span class="sse-arrow"> | </span>
+            <span class="sse-event">{cancelled}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge DELETE">DELETE</span>
+          <span class="endpoint-path">/api/rag/index/{job_id}</span>
+          <span class="endpoint-desc">لغو عملیات ایندکس در حال اجرا</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>با تنظیم threading.Event مربوط به job، عملیات ایندکس‌سازی را متوقف می‌کند. loop embedding بین batches این رویداد را بررسی می‌کند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge GET">GET</span>
+          <span class="endpoint-path">/api/rag/collections</span>
+          <span class="endpoint-desc">لیست collection های ایندکس‌شده</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>نام همه collection های موجود در دایرکتوری <code>faiss_db/</code> را برمی‌گرداند.</p>
+          <div class="sse-events">بازگشت: <span class="sse-event">{"collections": ["اسناد_سازمانی", "radar", ...]}</span></div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge DELETE">DELETE</span>
+          <span class="endpoint-path">/api/rag/collections/{collection}</span>
+          <span class="endpoint-desc">حذف یک collection</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>دایرکتوری collection مورد نظر را به همراه تمام فایل‌های FAISS و pickle آن حذف می‌کند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/rag/chat/stream</span>
+          <span class="endpoint-desc">چت هیبرید RAG روی اسناد ایندکس‌شده</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>پرسش کاربر را از طریق HybridRetriever بازیابی کرده، context می‌سازد و با LLM پاسخ streaming تولید می‌کند. منابع استفاده‌شده در انتها ارسال می‌شوند.</p>
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">message</td><td class="param-type">str</td><td class="param-default">—</td><td>سوال کاربر (الزامی)</td></tr>
+              <tr><td class="param-name">collection</td><td class="param-type">str</td><td class="param-default">"default_pdf"</td><td>نام collection هدف</td></tr>
+              <tr><td class="param-name">session_id</td><td class="param-type">str</td><td class="param-default">"rag_default"</td><td>شناسه session</td></tr>
+              <tr><td class="param-name">model</td><td class="param-type">str</td><td class="param-default">env</td><td>مدل Ollama</td></tr>
+              <tr><td class="param-name">ollama_url</td><td class="param-type">str</td><td class="param-default">env</td><td>آدرس Ollama</td></tr>
+              <tr><td class="param-name">temperature</td><td class="param-type">float</td><td class="param-default">0.3</td><td>دمای LLM</td></tr>
+              <tr><td class="param-name">top_k</td><td class="param-type">int</td><td class="param-default">8 (env)</td><td>تعداد chunk های بازیابی (۱–۵۰)</td></tr>
+              <tr><td class="param-name">use_web</td><td class="param-type">bool</td><td class="param-default">false</td><td>افزودن نتایج وب به context</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">
+            <span class="sse-label">رویدادهای SSE:</span>
+            <span class="sse-event">{status:"retrieving"}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{status:"retrieval_done"}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{token}</span> × N <span class="sse-arrow">→</span>
+            <span class="sse-event">{sources:[...]}</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{web_sources}?</span> <span class="sse-arrow">→</span>
+            <span class="sse-event">{done}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/rag/clear</span>
+          <span class="endpoint-desc">پاک کردن تاریخچه چت RAG</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>تاریخچه مکالمه session مشخص‌شده در RAG Chat را پاک می‌کند.</p>
+          <table class="params-table">
+            <thead><tr><th>پارامتر</th><th>محل</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">session_id</td><td class="param-type">Query</td><td>شناسه session RAG</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ Article ─ -->
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">🌐 ماژول Article — /api/article</div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/article/fetch</span>
+          <span class="endpoint-desc">دریافت و ذخیره محتوای یک URL</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>URL مقاله را دریافت، محتوا را با BeautifulSoup استخراج و در حافظه ذخیره می‌کند. یک session_id یکتا برمی‌گرداند.</p>
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">url</td><td class="param-type">str</td><td>آدرس مقاله (الزامی)</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">بازگشت: <span class="sse-event">{"session_id", "title", "preview" (500 کاراکتر), "length"}</span></div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/article/chat/stream</span>
+          <span class="endpoint-desc">چت streaming روی مقاله دریافت‌شده</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>متن مقاله (تا ۱۲,۰۰۰ کاراکتر) به‌عنوان system message به LLM تزریق می‌شود و پاسخ به‌صورت streaming ارسال می‌گردد.</p>
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">message</td><td class="param-type">str</td><td class="param-default">—</td><td>سوال کاربر</td></tr>
+              <tr><td class="param-name">session_id</td><td class="param-type">str</td><td class="param-default">—</td><td>شناسه session مقاله</td></tr>
+              <tr><td class="param-name">model</td><td class="param-type">str</td><td class="param-default">env</td><td>مدل Ollama</td></tr>
+              <tr><td class="param-name">ollama_url</td><td class="param-type">str</td><td class="param-default">env</td><td>آدرس Ollama</td></tr>
+              <tr><td class="param-name">temperature</td><td class="param-type">float</td><td class="param-default">0.3</td><td>دمای LLM</td></tr>
+              <tr><td class="param-name">use_web</td><td class="param-type">bool</td><td class="param-default">false</td><td>جستجوی وب اضافی</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge DELETE">DELETE</span>
+          <span class="endpoint-path">/api/article/session/{session_id}</span>
+          <span class="endpoint-desc">حذف session مقاله از حافظه</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>مقاله ذخیره‌شده و تاریخچه چت مربوط به session را از حافظه پاک می‌کند.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ Alerts ─ -->
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">🔔 ماژول Alerts — /api/alerts</div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge GET">GET</span>
+          <span class="endpoint-path">/api/alerts/rules</span>
+          <span class="endpoint-desc">دریافت لیست قوانین هشدار</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>تمام قوانین هشدار را به ترتیب تاریخ ایجاد از SQLite برمی‌گرداند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/alerts/rules</span>
+          <span class="endpoint-desc">ایجاد قانون هشدار جدید</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">name</td><td class="param-type">str</td><td>نام قانون (الزامی)</td></tr>
+              <tr><td class="param-name">category</td><td class="param-type">str</td><td>دسته‌بندی (الزامی)</td></tr>
+              <tr><td class="param-name">keywords</td><td class="param-type">str</td><td>کلیدواژه‌ها (الزامی)</td></tr>
+              <tr><td class="param-name">description</td><td class="param-type">str</td><td>توضیحات (اختیاری)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge PUT">PUT</span>
+          <span class="endpoint-path">/api/alerts/rules/{rule_id}</span>
+          <span class="endpoint-desc">ویرایش قانون هشدار</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>قانون هشدار موجود را با داده‌های جدید به‌روز می‌کند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge DELETE">DELETE</span>
+          <span class="endpoint-path">/api/alerts/rules/{rule_id}</span>
+          <span class="endpoint-desc">حذف قانون هشدار</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>قانون هشدار را حذف می‌کند. به دلیل CASCADE DELETE، تمام نتایج مرتبط نیز پاک می‌شوند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge GET">GET</span>
+          <span class="endpoint-path">/api/alerts/results</span>
+          <span class="endpoint-desc">دریافت نتایج اسکن‌ها</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>نتایج تطابق‌یافته را برمی‌گرداند. حداکثر ۲۰۰ رکورد با JOIN بر روی جدول alert_rules.</p>
+          <table class="params-table">
+            <thead><tr><th>پارامتر</th><th>محل</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">rule_id</td><td class="param-type">Query</td><td>فیلتر روی یک قانون خاص (اختیاری)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge DELETE">DELETE</span>
+          <span class="endpoint-path">/api/alerts/results/{result_id}</span>
+          <span class="endpoint-desc">حذف یک نتیجه اسکن</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>یک رکورد خاص از نتایج هشدار را حذف می‌کند.</p>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge POST">POST</span>
+          <span class="endpoint-path">/api/alerts/scan</span>
+          <span class="endpoint-desc">اسکن URL یا RSS با LLM</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p>یک URL یا RSS Feed را دریافت می‌کند. به‌ازای هر جفت مقاله × قانون، از LLM (با دمای ۰.۰) درخواست می‌کند تشخیص دهد آیا محتوا با قانون تطابق دارد یا نه. نتایج مثبت در SQLite ذخیره می‌شوند.</p>
+          <table class="params-table">
+            <thead><tr><th>فیلد</th><th>نوع</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+            <tbody>
+              <tr><td class="param-name">url</td><td class="param-type">str</td><td class="param-default">—</td><td>آدرس مقاله یا فید RSS (الزامی)</td></tr>
+              <tr><td class="param-name">rule_ids</td><td class="param-type">List[int]</td><td class="param-default">همه</td><td>فیلتر قوانین خاص (اختیاری)</td></tr>
+              <tr><td class="param-name">model</td><td class="param-type">str</td><td class="param-default">env</td><td>مدل Ollama</td></tr>
+              <tr><td class="param-name">ollama_url</td><td class="param-type">str</td><td class="param-default">env</td><td>آدرس Ollama</td></tr>
+              <tr><td class="param-name">max_rss_items</td><td class="param-type">int</td><td class="param-default">20</td><td>حداکثر مقالات RSS برای اسکن</td></tr>
+            </tbody>
+          </table>
+          <div class="sse-events">بازگشت: <span class="sse-event">{"articles_scanned", "rules_checked", "alerts_found", "alerts": [...]}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ Utility ─ -->
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">⚙️ Utility Endpoints</div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge GET">GET</span>
+          <span class="endpoint-path">/api/health</span>
+          <span class="endpoint-desc">بررسی سلامت سامانه</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="sse-events"><span class="sse-event">{"status": "ok", "version": "4.0.0", "embedding": "bge-m3", "vectorstore": "faiss"}</span></div>
+        </div>
+      </div>
+
+      <div class="endpoint" onclick="toggleEndpoint(this)">
+        <div class="endpoint-header">
+          <span class="method-badge GET">GET</span>
+          <span class="endpoint-path">/api/config</span>
+          <span class="endpoint-desc">دریافت تنظیمات پیش‌فرض</span>
+          <span class="endpoint-arrow">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="sse-events"><span class="sse-event">{"default_model", "ollama_url", "default_top_k"}</span></div>
+          <p style="margin-top:8px;">مقادیر از متغیرهای محیطی (.env) خوانده می‌شوند.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ٨. معماری Hybrid RAG
+  ══════════════════════════════════════════════════════ -->
+  <section id="hybrid-rag">
+    <div class="section-header">
+      <div class="section-icon purple">🧠</div>
+      <div>
+        <h2>جزئیات معماری Hybrid RAG</h2>
+        <div class="section-sub">چگونگی ترکیب Dense + Sparse Retrieval برای بازیابی دقیق</div>
+      </div>
+    </div>
+
+    <div class="info-box amber">
+      <span class="ib-icon">⚡</span>
+      <div>معماری هیبرید RAG در این سامانه از دو مکانیزم موازی استفاده می‌کند: جستجوی معنایی با BGE-M3 (Dense) و جستجوی کلیدواژه‌ای با BM25 (Sparse). نتایج هر دو با الگوریتم RRF ادغام می‌شوند تا بهترین نتیجه حاصل شود.</div>
+    </div>
+
+    <div class="rag-steps" style="margin-top: 28px;">
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(79,110,247,0.2); color: var(--primary);">۱</div>
+        <div class="rag-step-content">
+          <h3>📥 مرحله Ingestion — ساخت ایندکس</h3>
+          <p>فایل‌های PDF (با PyPDFLoader) و DOCX (با Docx2txtLoader) بارگذاری می‌شوند. متن با <strong>RecursiveCharacterTextSplitter</strong> تقسیم می‌شود — با جداکننده‌های بهینه‌شده برای فارسی:</p>
+          <code class="code-inline">separators = ["\n\n", "\n", ".", "؟", "!", "؛", "،", " ", ""]
+chunk_size=1000, overlap=150</code>
+          <p style="margin-top: 12px;">هر chunk در دسته‌های ۳۲تایی با BGE-M3 embedding می‌شود و به <strong>faiss.IndexFlatIP</strong> (inner product = cosine روی بردارهای نرمال‌شده) اضافه می‌گردد. همچنین Document های خام در <code>docs.pkl</code> ذخیره می‌شوند — این فایل corpus مرجع BM25 است.</p>
+        </div>
+      </div>
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(16,185,129,0.2); color: var(--secondary);">۲</div>
+        <div class="rag-step-content">
+          <h3>🔍 مرحله Retrieval — بازیابی موازی</h3>
+          <p>در زمان پرسش، <strong>HybridRetriever.invoke(query)</strong> دو بازیاب را به‌صورت موازی اجرا می‌کند:</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+            <div style="background: rgba(79,110,247,0.08); border: 1px solid rgba(79,110,247,0.2); border-radius: 8px; padding: 14px;">
+              <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">🔵 Dense Retrieval</div>
+              <div style="font-size: 13px; color: var(--text-muted);">وزن پیش‌فرض: <strong style="color: var(--primary);">0.7</strong><br/>BGE-M3 سوال را embed می‌کند و FAISS نزدیک‌ترین بردارها را پیدا می‌کند. برای تطابق معنایی.</div>
+            </div>
+            <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 14px;">
+              <div style="font-weight: 700; color: var(--accent); margin-bottom: 8px;">🟡 Sparse Retrieval</div>
+              <div style="font-size: 13px; color: var(--text-muted);">وزن پیش‌فرض: <strong style="color: var(--accent);">0.3</strong><br/>BM25Retriever روی corpus ساخته‌شده از docs.pkl. برای تطابق کلیدواژه دقیق.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(245,158,11,0.2); color: var(--accent);">۳</div>
+        <div class="rag-step-content">
+          <h3>⚖️ Reciprocal Rank Fusion (RRF)</h3>
+          <p>نتایج دو بازیاب با الگوریتم RRF ادغام می‌شوند. هر سند بر اساس رتبه‌اش در هر لیست امتیاز می‌گیرد:</p>
+          <div class="formula-box">
+            <span class="formula-label">فرمول RRF</span>
+            score(doc) = Σ  weight_i / (k + rank_i)
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; font-family: 'Vazirmatn',sans-serif;">k = 60 (ثابت پایدارساز) &nbsp;|&nbsp; weight_dense=0.7, weight_sparse=0.3</div>
+          </div>
+          <p>اسناد تکراری (بر اساس فایل+صفحه+محتوا) حذف می‌شوند و <strong>top_k سند برتر</strong> (پیش‌فرض: ۸) انتخاب می‌گردند. وزن‌ها از طریق متغیرهای محیطی <code>DENSE_WEIGHT</code> و <code>SPARSE_WEIGHT</code> قابل تنظیم هستند.</p>
+        </div>
+      </div>
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(139,92,246,0.2); color: #8B5CF6;">۴</div>
+        <div class="rag-step-content">
+          <h3>📝 ساخت Context و تزریق به LLM</h3>
+          <p>هر سند بازیابی‌شده با هدر متادیتا فرمت‌دهی می‌شود:</p>
+          <code class="code-inline">[منبع ۱ — نام_فایل.pdf ص۳]
+متن محتوای chunk...</code>
+          <p style="margin-top: 12px;">یک <strong>ChatPromptTemplate</strong> با system context، تاریخچه مکالمه (MessagesPlaceholder) و سوال کاربر ساخته می‌شود. LLM پاسخ را به‌صورت streaming تولید می‌کند. در پایان، سنتینل <code>\x00SOURCES\x00</code> با اطلاعات کامل منابع ارسال می‌گردد.</p>
+        </div>
+      </div>
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(16,185,129,0.2); color: var(--secondary);">۵</div>
+        <div class="rag-step-content">
+          <h3>🤖 مدل Embedding — BGE-M3</h3>
+          <p><strong>BGE-M3</strong> (BAAI) یک singleton است که در startup بارگذاری می‌شود. مشخصات کلیدی:</p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 12px;">
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">پشتیبانی زبانی</div>
+              <div style="color: var(--text-muted);">بیش از ۱۰۰ زبان، شامل فارسی</div>
+            </div>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">نرمال‌سازی</div>
+              <div style="color: var(--text-muted);">L2-normalized — inner product = cosine</div>
+            </div>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">پردازش دسته‌ای</div>
+              <div style="color: var(--text-muted);">batch_size=32، با تشخیص خودکار GPU</div>
+            </div>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">حجم مدل</div>
+              <div style="color: var(--text-muted);">≈ ۲ گیگابایت، در models/bge-m3/</div>
+            </div>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">Warm-up</div>
+              <div style="color: var(--text-muted);">پیش‌بارگذاری در daemon thread هنگام startup</div>
+            </div>
+            <div style="background: var(--code-bg); border-radius: 8px; padding: 12px; font-size: 13px;">
+              <div style="color: var(--primary); font-weight: 700; margin-bottom: 4px;">بدون prefix</div>
+              <div style="color: var(--text-muted);">برخلاف E5، نیازی به query/passage prefix ندارد</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rag-step">
+        <div class="rag-step-num" style="background: rgba(239,68,68,0.2); color: var(--danger);">۶</div>
+        <div class="rag-step-content">
+          <h3>⚙️ تنظیمات و بهینه‌سازی‌های کلیدی</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>تاریخچه مکالمه:</strong> <span style="color: var(--text-muted);">محدود به ۶ پیام اخیر برای جلوگیری از overflow context</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>LLM Cache:</strong> <span style="color: var(--text-muted);">ChatOllama با کلید (url, model, temperature) cache می‌شود</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>لغو ایندکس:</strong> <span style="color: var(--text-muted);">هر job یک threading.Event دارد — قابل لغو بین batches</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>محدودیت مقاله:</strong> <span style="color: var(--text-muted);">فقط ۱۲,۰۰۰ کاراکتر اول به LLM ارسال می‌شود</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>دمای Alert:</strong> <span style="color: var(--text-muted);">0.0 برای تشخیص قطعی MATCH/NO-MATCH بدون خلاقیت</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>Multipart Limit:</strong> <span style="color: var(--text-muted);">حداکثر حجم آپلود از ۱ مگابایت پیش‌فرض Starlette به ۵۰۰ مگابایت افزایش یافته</span></span>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px;">
+              <span style="color: var(--secondary); flex-shrink: 0;">✓</span>
+              <span><strong>تشخیص RSS:</strong> <span style="color: var(--text-muted);">Heuristic بر اساس وجود /feed, /rss, .xml, atom در URL</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hybrid RAG overview diagram -->
+    <div class="diagram-wrap" style="margin-top: 32px;">
+      <div class="mermaid">
+flowchart LR
+    Q([❓ سوال کاربر]) --> EMB_Q[BGE-M3\nEmbed Query]
+
+    EMB_Q --> FAISS_S[🔵 FAISS\nSimilarity Search\nDense k=16]
+    EMB_Q --> BM25_S[🟡 BM25\nKeyword Search\nSparse k=16]
+
+    FAISS_S --> RRF_BOX["⚖️ RRF Fusion\nscore = Σ w_i/(k+rank_i)\nk=60, dense=0.7, sparse=0.3"]
+    BM25_S --> RRF_BOX
+
+    RRF_BOX --> DEDUP[🔄 Deduplication]
+    DEDUP --> TOP_K[📋 Top-K Chunks\n k=8]
+
+    TOP_K --> PROMPT[📝 Prompt Builder\nSystem + History + Context]
+    PROMPT --> LLM_G[🤖 ChatOllama\nStreaming Generation]
+    LLM_G --> OUT([✅ پاسخ + منابع])
+
+    style Q fill:#4F6EF7,color:#fff,stroke:none
+    style OUT fill:#10B981,color:#fff,stroke:none
+    style RRF_BOX fill:#F59E0B,color:#fff,stroke:none
+    style FAISS_S fill:#4F6EF7,color:#fff,stroke:none
+    style BM25_S fill:#D97706,color:#fff,stroke:none
+      </div>
+      <p class="diagram-label">جریان کامل Hybrid RAG — از سوال ورودی تا پاسخ نهایی با منابع</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═════════════════════════════════════════ FOOTER ════════ -->
+<footer>
+  مستندات فنی سامانه RagBot — نسخه ۴.۰.۰ &nbsp;|&nbsp; معماری Hybrid RAG با BGE-M3 + FAISS + BM25
+</footer>
+
+<script>
+  // ─── Mermaid init ───
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#4F6EF7',
+      primaryTextColor: '#E2E8F0',
+      primaryBorderColor: '#2E3250',
+      lineColor: '#8892B0',
+      secondaryColor: '#1A1D2E',
+      tertiaryColor: '#212440',
+      background: '#0F1117',
+      mainBkg: '#1A1D2E',
+      nodeBorder: '#2E3250',
+      clusterBkg: '#1A1D2E',
+      titleColor: '#E2E8F0',
+      edgeLabelBackground: '#1A1D2E',
+      fontFamily: 'Vazirmatn, sans-serif',
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true },
+    er: { useMaxWidth: true },
+  });
+
+  // ─── Toggle endpoint ───
+  function toggleEndpoint(el) {
+    el.classList.toggle('open');
+  }
+
+  // ─── Active nav highlight ───
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

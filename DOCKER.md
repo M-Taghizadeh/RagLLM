@@ -59,15 +59,20 @@ python scripts/download_embedding.py
 cp .env.example .env
 ```
 
-متغیر مهم برای لینوکس (ollama داخل Docker):
+متغیرهای مهم Ollama:
+
 ```env
-OLLAMA_URL=http://ollama:11434
+# برای اجرای دستی (uvicorn روی host)
+OLLAMA_URL=http://localhost:11434
+
+# آدرسی که کانتینر ragbot واقعاً استفاده می‌کند (compose این را تزریق می‌کند)
+# ویندوز / Ollama روی host:
+DOCKER_OLLAMA_URL=http://host.docker.internal:11434
+# لینوکس با --profile linux-gpu:
+# DOCKER_OLLAMA_URL=http://ollama:11434
 ```
 
-متغیر مهم برای ویندوز (ollama نصب native):
-```env
-OLLAMA_URL=http://host.docker.internal:11434
-```
+`DATABASE_URL` داخل Compose همیشه به سرویس `postgres` override می‌شود؛ مقدار لوکال `.env` فقط برای اجرای دستی است.
 
 ---
 
@@ -171,7 +176,9 @@ docker compose --profile linux-gpu up -d --build
 |--------|-------|
 | `ragbot_ollama_data` | مدل‌های Ollama |
 | `ragbot_faiss_data` | ایندکس‌های FAISS |
-| `ragbot_sqlite_data` | پایگاه داده alert ها |
+| `ragbot_sqlite_data` | پایگاه داده alert ها (`DB_PATH`) |
+| `ragbot_postgres_data` | PostgreSQL (کاربران / سشن / کالکشن) |
+| `ragbot_uploads_data` | فایل‌های آپلودشده |
 
 ```bash
 # بکاپ FAISS
@@ -204,8 +211,10 @@ python scripts/download_embedding.py
 
 **Ollama در دسترس نیست:**
 ```bash
-docker compose logs ollama
-# یا روی ویندوز بررسی کنید ollama serve در حال اجرا است
+docker compose logs ragbot
+# داخل کانتینر باید DOCKER_OLLAMA_URL به host یا سرویس ollama برسد
+# ویندوز: Ollama native + DOCKER_OLLAMA_URL=http://host.docker.internal:11434
+# لینوکس GPU: docker compose --profile linux-gpu ... و DOCKER_OLLAMA_URL=http://ollama:11434
 ```
 
 **لاگ‌های زنده:**

@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RagBot</title>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="app-bg" aria-hidden="true"></div>
@@ -30,21 +27,29 @@
     </div>
 
     <nav class="sidebar-nav">
+      <button class="nav-item nav-item-admin" data-section="users" id="navUsers" style="display:none">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M19 8v6M22 11h-6"/></svg>
+        <span class="nav-label">مدیریت کاربران</span>
+      </button>
+      <button class="nav-item" data-section="docs">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h3l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M12 11v4M10 13h4"/></svg>
+        <span class="nav-label">مدیریت اسناد</span>
+      </button>
       <button class="nav-item active" data-section="chat">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v8a3 3 0 01-3 3H9l-5 4v-4a3 3 0 01-0-0z"/></svg>
-        <span class="nav-label">چت‌بات هوشمند</span>
+        <span class="nav-label">چت بات هوشمند</span>
       </button>
       <button class="nav-item" data-section="rag">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-        <span class="nav-label">چت‌بات اسناد داخلی</span>
+        <span class="nav-label">چت بات اسناد داخلی</span>
       </button>
       <button class="nav-item" data-section="article">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
-        <span class="nav-label">چت‌بات مقالات وب</span>
+        <span class="nav-label">چت بات مقالات وب</span>
       </button>
       <button class="nav-item" data-section="alerts">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 016 6c0 4 2 5 2 5H4s2-1 2-5a6 6 0 016-6z"/><path d="M10 19a2 2 0 004 0"/></svg>
-        <span class="nav-label">هشدار خبری</span>
+        <span class="nav-label">سیستم هشدار دهی خبری</span>
       </button>
     </nav>
 
@@ -109,6 +114,18 @@
     <div class="sidebar-footer">
       <span>معماری سامانه : Hybrid RAG</span>
     </div>
+
+    <!-- User bar -->
+    <div class="sidebar-user-bar" id="sidebarUserBar">
+      <div class="user-bar-avatar" id="userAvatar">—</div>
+      <div class="user-bar-info">
+        <div class="user-bar-name"  id="userDisplayName">...</div>
+        <div class="user-bar-role"  id="userRoleBadge">کاربر</div>
+      </div>
+      <button class="user-bar-logout" id="logoutBtn" title="خروج" type="button" aria-label="خروج از سامانه">
+        <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 3h4v14h-4M8 14l5-4-5-4M3 10h10"/></svg>
+      </button>
+    </div>
   </aside>
 
   <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="منو">☰</button>
@@ -136,7 +153,13 @@
           <p class="section-eyebrow">Hybrid RAG</p>
           <h1>چت روی اسناد</h1>
         </div>
-        <button class="btn-secondary" id="clearRag" type="button">پاک کردن</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-secondary" id="ragHistoryBtn" type="button" title="تاریخچه گفتگو">
+            <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:middle;margin-left:5px"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/></svg>
+            تاریخچه
+          </button>
+          <button class="btn-secondary" id="clearRag" type="button">گفتگوی جدید</button>
+        </div>
       </div>
 
       <div class="panel upload-panel" id="ragUploadPanel">
@@ -187,6 +210,34 @@
         <textarea id="ragInput" class="chat-textarea" placeholder="سؤال درباره اسناد..." rows="2"></textarea>
         <button id="ragSend" class="btn-send" type="button">ارسال</button>
       </div>
+
+      <!-- History panel (slide-in from left) -->
+      <div class="history-backdrop" id="historyBackdrop" aria-hidden="true">
+        <div class="history-panel" id="historyPanel" role="dialog" aria-modal="true" aria-labelledby="historyPanelTitle">
+          <div class="history-panel-header">
+            <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/></svg>
+            <h3 id="historyPanelTitle">گفتگوها</h3>
+            <span class="history-col-badge" id="historyColBadge"></span>
+            <div style="margin-right:auto;display:flex;gap:6px">
+              <button class="btn-secondary" id="newChatHistoryBtn" type="button" style="font-size:11px;padding:4px 8px" title="شروع گفتگوی جدید">
+                گفتگوی جدید
+              </button>
+              <button class="btn-danger" id="clearHistoryBtn" type="button" style="font-size:11px;padding:4px 8px" title="حذف همه گفتگوهای این مجموعه">
+                <svg viewBox="0 0 20 20" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
+                همه
+              </button>
+              <button class="modal-close" id="historyClose" type="button" aria-label="بستن">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="history-panel-body" id="historyPanelBody">
+            <div class="history-loading" id="historyLoading" style="display:none">
+              <span class="docs-spinner"></span> در حال بارگذاری...
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="section" id="section-article">
@@ -212,6 +263,125 @@
       <div class="chat-input-area">
         <textarea id="articleInput" class="chat-textarea" placeholder="سؤال درباره مقاله..." rows="2"></textarea>
         <button id="articleSend" class="btn-send" type="button">ارسال</button>
+      </div>
+    </section>
+
+    <section class="section" id="section-docs">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">Document Management</p>
+          <h1>مدیریت اسناد</h1>
+        </div>
+        <button class="btn-primary" id="docsNewCollectionBtn" type="button">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+          مجموعه جدید
+        </button>
+      </div>
+
+      <!-- Toolbar: search + sort -->
+      <div class="docs-toolbar">
+        <div class="docs-search-wrap">
+          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
+          <input type="search" id="docsSearchInput" class="docs-search-input" placeholder="جستجوی مجموعه...">
+        </div>
+        <button id="docsRefreshBtn" class="btn-icon btn-icon-sm" title="بارگذاری مجدد" type="button">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Collections grid -->
+      <div class="docs-grid-wrap">
+        <div id="docsGrid" class="docs-grid">
+          <!-- cards injected by docs.js -->
+        </div>
+        <div id="docsEmpty" class="docs-empty" hidden>
+          <svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".35"><path d="M8 12a4 4 0 014-4h6l4 4h14a4 4 0 014 4v18a4 4 0 01-4 4H12a4 4 0 01-4-4z"/><path d="M24 22v8M21 26h6"/></svg>
+          <p id="docsEmptyMsg">مدیریت فایل ها و مجموعه ها در سامانه</p>
+          <button class="btn-primary" id="docsEmptyNewBtn" type="button" style="margin-top:10px">ساخت مجموعه</button>
+        </div>
+        <div id="docsLoading" class="docs-loading" style="display:none">
+          <span class="docs-spinner"></span>
+          در حال بارگذاری...
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════
+         مدیریت کاربران — Admin Only
+         ══════════════════════════════════════════════ -->
+    <section class="section" id="section-users">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">Admin</p>
+          <h1>مدیریت کاربران</h1>
+        </div>
+        <button class="btn-primary" id="addUserBtn" type="button">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+          کاربر جدید
+        </button>
+      </div>
+
+      <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:0;padding:0">
+        <div class="users-table-wrap" id="usersTableWrap">
+          <table class="users-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>نام کاربری</th>
+                <th>نام نمایشی</th>
+                <th>نقش</th>
+                <th>وضعیت</th>
+                <th>تاریخ ثبت</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="7" class="users-table-loading">
+                <span class="docs-spinner"></span> در حال بارگذاری...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User form slide-in panel -->
+      <div class="rule-form-backdrop" id="userFormBackdrop" aria-hidden="true">
+        <div class="rule-form-panel" id="userFormPanel" role="dialog" aria-modal="true" aria-labelledby="userFormTitle">
+          <div class="rule-form-header">
+            <h3 id="userFormTitle">کاربر جدید</h3>
+            <button class="modal-close" id="userFormClose" type="button" aria-label="بستن">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+            </button>
+          </div>
+          <div class="rule-form-body">
+            <input type="hidden" id="userFormId" value="" />
+            <label class="field-label">نام کاربری <small>(لاتین، حداقل ۳ کاراکتر)</small></label>
+            <input type="text" id="userFormUsername" class="field-input" placeholder="مثال: john_doe" autocomplete="off" />
+            <label class="field-label">نام نمایشی</label>
+            <input type="text" id="userFormDisplayName" class="field-input" placeholder="مثال: علی احمدی" />
+            <label class="field-label">رمز عبور <small id="userFormPwdNote">(حداقل ۶ کاراکتر)</small></label>
+            <input type="password" id="userFormPassword" class="field-input" placeholder="رمز عبور" autocomplete="new-password" />
+            <div class="toggle-row" style="margin-top:8px">
+              <span class="field-label" style="margin:0">دسترسی مدیر</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="userFormIsAdmin" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row" id="userFormActiveRow">
+              <span class="field-label" style="margin:0">حساب فعال</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="userFormIsActive" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="userFormStatus" class="status-bar" style="margin-top:6px"></div>
+          </div>
+          <div class="rule-form-footer">
+            <button id="userFormSave" class="btn-primary" style="flex:1" type="button">ذخیره</button>
+            <button id="userFormCancel" class="btn-secondary" type="button">انصراف</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -315,6 +485,111 @@
 
   </main>
 
+  <!-- ═══════════════════════════════════════════
+       Docs Management Modals
+       ═══════════════════════════════════════════ -->
+
+  <!-- Modal: New / Edit Collection -->
+  <div class="modal-backdrop" id="docsColModalBackdrop" aria-hidden="true">
+    <div class="modal" id="docsColModal" role="dialog" aria-modal="true" aria-labelledby="docsColModalTitle">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h3l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div>
+          <h2 id="docsColModalTitle">مجموعه جدید</h2>
+          <p class="modal-sub" id="docsColModalSub">نام مجموعه را وارد کنید</p>
+        </div>
+        <button class="modal-close" id="docsColModalClose" type="button" aria-label="بستن">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="docsColModalId" value="" />
+        <label class="modal-label" for="docsColNameInput">نام مجموعه</label>
+        <div class="modal-input-wrap">
+          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h5l2 2h7v10H3z"/></svg>
+          <input type="text" id="docsColNameInput" class="modal-input" placeholder="نام مجموعه را وارد کنید" autocomplete="off" />
+        </div>
+        <p class="modal-hint">نام می‌تواند فارسی باشد. برای ایندکس، فایل‌ها را بعد از ساخت مجموعه اضافه کنید.</p>
+        <div id="docsColModalStatus" class="status-bar" style="margin-top:4px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary modal-cancel" id="docsColModalCancel" type="button">انصراف</button>
+        <button class="btn-primary" id="docsColModalConfirm" type="button">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 10l5 5 7-7"/></svg>
+          <span id="docsColModalConfirmLabel">ایجاد</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Open Collection (detail view) -->
+  <div class="modal-backdrop docs-detail-backdrop" id="docsDetailBackdrop" aria-hidden="true">
+    <div class="modal docs-detail-modal" role="dialog" aria-modal="true" aria-labelledby="docsDetailTitle">
+
+      <div class="modal-header docs-detail-header">
+        <div class="modal-icon docs-detail-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h3l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="docs-detail-heading">
+          <h2 id="docsDetailTitle" class="docs-detail-colname">نام مجموعه</h2>
+          <p class="modal-sub" id="docsDetailMeta">—</p>
+        </div>
+        <div class="docs-detail-actions">
+          <button id="docsDetailRenameBtn" class="btn-edit docs-detail-action-btn" type="button" title="تغییر نام">
+            <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3l4 4-9 9H4v-4z"/></svg>
+            تغییر نام
+          </button>
+          <button id="docsDetailDeleteBtn" class="btn-danger docs-detail-action-btn" type="button" title="حذف مجموعه">
+            <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
+            حذف مجموعه
+          </button>
+        </div>
+        <button class="modal-close" id="docsDetailClose" type="button" aria-label="بستن">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </div>
+
+      <!-- Add files toolbar -->
+      <div class="docs-detail-upload-bar">
+        <div class="upload-trigger docs-detail-upload-trigger" id="docsDetailDrop">
+          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13V4M10 4L7 7M10 4l3 3"/><path d="M3 14a4 4 0 004 4h6a4 4 0 000-8H9"/></svg>
+          افزودن فایل
+          <span class="upload-formats">PDF · Word</span>
+          <input type="file" id="docsDetailFileInput" accept=".pdf,.doc,.docx" multiple hidden />
+        </div>
+        <div id="docsDetailFileChips" class="file-list-inline"></div>
+        <button id="docsDetailUploadBtn" class="btn-primary btn-index" type="button" disabled style="margin-right:auto">
+          <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 10h16M12 3v14"/></svg>
+          ایندکس
+        </button>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="index-progress-wrap" id="docsDetailProgressWrap" style="display:none;margin:0 20px 10px">
+        <div class="index-progress-fill" id="docsDetailProgressFill"></div>
+      </div>
+      <div id="docsDetailUploadStatus" class="status-bar" style="margin:0 20px 8px"></div>
+
+      <!-- Files list -->
+      <div class="modal-body docs-detail-body" id="docsDetailBody">
+        <div class="docs-detail-loading" id="docsDetailLoading">
+          <span class="docs-spinner"></span> در حال بارگذاری...
+        </div>
+      </div>
+
+      <div class="modal-footer docs-detail-footer">
+        <button id="docsDetailChatBtn" class="btn-primary" type="button">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v8a3 3 0 01-3 3H9l-5 4v-4a3 3 0 01-0-0z"/></svg>
+          چت روی این مجموعه
+        </button>
+        <button class="btn-secondary" id="docsDetailCloseFooter" type="button">بستن</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Index Collection Modal -->
   <div class="modal-backdrop" id="indexModalBackdrop" aria-hidden="true">
     <div class="modal" id="indexModal" role="dialog" aria-modal="true" aria-labelledby="indexModalTitle">
@@ -379,11 +654,14 @@
     </div>
   </div>
 
+  <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/rag.js"></script>
   <script src="js/article.js"></script>
   <script src="js/alerts.js"></script>
+  <script src="js/docs.js"></script>
+  <script src="js/users.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

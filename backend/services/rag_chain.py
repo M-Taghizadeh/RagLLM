@@ -25,6 +25,25 @@ def clear_session(session_id: str) -> None:
     _store.pop(session_id, None)
 
 
+def hydrate_session(session_id: str, messages: list[dict]) -> None:
+    """
+    Rebuild in-memory LangChain history from persisted DB messages
+    so a resumed conversation keeps short-term context.
+    """
+    clear_session(session_id)
+    hist = ChatMessageHistory()
+    for m in messages[-6:]:
+        role = (m.get("role") or "").strip()
+        content = (m.get("content") or "").strip()
+        if not content:
+            continue
+        if role == "user":
+            hist.add_user_message(content)
+        elif role == "assistant":
+            hist.add_ai_message(content)
+    _store[session_id] = hist
+
+
 def _format_docs(docs: List[Document]) -> str:
     parts = []
     for i, d in enumerate(docs, 1):

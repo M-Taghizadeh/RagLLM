@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ورود — RagBot</title>
+  <style>
+    /* ── Local Vazirmatn font-face ── */
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('font/Vazirmatn-Regular.woff2') format('woff2');
+      font-weight: 300 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('font/Vazirmatn-Medium.woff2') format('woff2');
+      font-weight: 500 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('font/Vazirmatn-Bold.woff2') format('woff2');
+      font-weight: 700 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:         #14212b;
+      --ink-soft:    #3d5160;
+      --ink-muted:   #7a8f9e;
+      --paper:       #f3f7f9;
+      --surface:     #ffffff;
+      --border:      rgba(20,33,43,.10);
+      --border-s:    rgba(20,33,43,.16);
+      --teal:        #0f7a75;
+      --teal-bright: #129990;
+      --teal-deep:   #0a5652;
+      --teal-soft:   rgba(15,122,117,.12);
+      --teal-glow:   rgba(18,153,144,.28);
+      --danger:      #c23b3b;
+      --danger-dim:  rgba(194,59,59,.12);
+      --shadow:      0 20px 60px rgba(20,33,43,.12);
+      --radius:      18px;
+      --font:        'Vazirmatn', Tahoma, sans-serif;
+    }
+    html { font-size: 15px; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(900px 500px at 10% -5%,  rgba(18,153,144,.18), transparent 55%),
+        radial-gradient(700px 480px at 95% 15%,  rgba(196,165,116,.16), transparent 50%),
+        radial-gradient(600px 400px at 65% 105%, rgba(15,122,117,.10), transparent 55%),
+        linear-gradient(165deg, #eef5f7 0%, #f7f3ea 48%, #e9f2f1 100%);
+      padding: 20px;
+    }
+    /* grid texture overlay */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: 0;
+      opacity: .35;
+      background-image:
+        linear-gradient(rgba(20,33,43,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20,33,43,.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    /* ── Card ── */
+    .login-card {
+      position: relative; z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border-s);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      padding: 42px 40px 36px;
+      animation: cardIn .4s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes cardIn {
+      from { opacity:0; transform: translateY(18px) scale(.97); }
+      to   { opacity:1; transform: translateY(0)   scale(1);   }
+    }
+
+    /* ── Brand ── */
+    .brand {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 32px;
+    }
+    .brand-mark {
+      width: 48px; height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, var(--teal-soft), rgba(196,165,116,.18));
+      border: 1px solid rgba(15,122,117,.22);
+      color: var(--teal);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      animation: pulse 4.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(15,122,117,0); }
+      50%      { box-shadow: 0 0 0 7px rgba(15,122,117,.07); }
+    }
+    .brand-mark svg { width: 28px; height: 28px; }
+    .brand-text { display: flex; flex-direction: column; gap: 2px; }
+    .brand-name { font-size: 1.55rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; }
+    .brand-sub  { font-size: 11.5px; color: var(--ink-muted); font-weight: 500; }
+
+    /* ── Form ── */
+    h1 {
+      font-size: 1.15rem; font-weight: 700; color: var(--ink);
+      margin-bottom: 22px;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+
+    .input-wrap {
+      display: flex; align-items: center; gap: 9px;
+      background: #f7fafb;
+      border: 1.5px solid var(--border-s);
+      border-radius: 11px;
+      padding: 0 13px;
+      height: 46px;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+      color: var(--ink-muted);
+    }
+    .input-wrap:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px var(--teal-glow);
+      background: #fff;
+      color: var(--teal);
+    }
+    .input-wrap input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--font); font-size: 14px; color: var(--ink);
+    }
+    .input-wrap input::placeholder { color: var(--ink-muted); font-size: 13px; }
+
+    .eye-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-muted); padding: 0; line-height: 0;
+      transition: color .15s;
+    }
+    .eye-btn:hover { color: var(--teal); }
+
+    /* error */
+    .error-msg {
+      display: none;
+      background: var(--danger-dim);
+      border: 1px solid rgba(194,59,59,.3);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-size: 13px;
+      color: var(--danger);
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+    .error-msg.show { display: flex; align-items: center; gap: 8px; }
+
+    /* submit */
+    .btn-login {
+      width: 100%; height: 48px;
+      background: linear-gradient(145deg, var(--teal), var(--teal-bright));
+      color: #fff; border: none; border-radius: 12px;
+      font-family: var(--font); font-size: 15px; font-weight: 700;
+      cursor: pointer; letter-spacing: .01em;
+      box-shadow: 0 8px 24px rgba(15,122,117,.30);
+      transition: filter .2s, transform .2s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-login:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn-login:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* spinner inside button */
+    .btn-spinner {
+      width: 17px; height: 17px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .btn-login.loading .btn-spinner { display: block; }
+    .btn-login.loading .btn-label   { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      margin-top: 22px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5" opacity=".35"/>
+          <path d="M12 22c3-8 13-8 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="2.2" fill="currentColor"/>
+          <circle cx="24" cy="16" r="2.2" fill="currentColor"/>
+          <path d="M20 24v6"  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">RagBot</span>
+        <span class="brand-sub">مبتنی بر Hybrid RAG</span>
+      </div>
+    </div>
+
+    <h1>ورود به سامانه</h1>
+
+    <!-- Error message -->
+    <div class="error-msg" id="errorMsg">
+      <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><circle cx="10" cy="10" r="8"/><path d="M10 6v4M10 13.5v.5"/></svg>
+      <span id="errorText">خطا در ورود</span>
+    </div>
+
+    <!-- Form -->
+    <form id="loginForm" autocomplete="on" novalidate>
+      <div class="field">
+        <label for="username">نام کاربری</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="7" r="3.5"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
+          <input type="text" id="username" name="username" placeholder="نام کاربری خود را وارد کنید"
+                 autocomplete="username" required autofocus />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">رمز عبور</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="2"/><path d="M7 9V6a3 3 0 016 0v3"/></svg>
+          <input type="password" id="password" name="password" placeholder="رمز عبور"
+                 autocomplete="current-password" required />
+          <button type="button" class="eye-btn" id="eyeBtn" aria-label="نمایش/مخفی رمز">
+            <svg id="eyeIcon" viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <ellipse cx="10" cy="10" rx="8" ry="5"/>
+              <circle cx="10" cy="10" r="2.2" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <div class="btn-spinner"></div>
+        <span class="btn-label">ورود</span>
+      </button>
+    </form>
+
+    <p class="footer-note">برای دریافت دسترسی با مدیر سیستم تماس بگیرید.</p>
+  </div>
+
+  <script>
+    // ── API base ──────────────────────────────────────────────────────────────
+    const API_BASE = (function () {
+      const loc = window.location;
+      if (loc.protocol === "http:" || loc.protocol === "https:")
+        return loc.origin + "/api";
+      return "http://localhost:8000/api";
+    })();
+
+    // ── If already logged in, redirect to main app ────────────────────────────
+    (function () {
+      const token = localStorage.getItem("ragbot_token");
+      if (token) {
+        // Quick validity check — if token exists just redirect
+        window.location.replace("index.html");
+      }
+    })();
+
+    // ── Toggle password visibility ────────────────────────────────────────────
+    const pwdInput = document.getElementById("password");
+    const eyeBtn   = document.getElementById("eyeBtn");
+    const eyeIcon  = document.getElementById("eyeIcon");
+
+    const eyeOpen   = `<ellipse cx="10" cy="10" rx="8" ry="5"/><circle cx="10" cy="10" r="2.2" fill="currentColor" stroke="none"/>`;
+    const eyeClosed = `<path d="M3 3l14 14M4.5 6.5A8.2 8.2 0 002 10c1.5 3 4.5 5 8 5a8 8 0 004.5-1.4M8 5.2A7.8 7.8 0 0110 5c3.5 0 6.5 2 8 5a8.5 8.5 0 01-2 2.8"/>`;
+
+    let pwdVisible = false;
+    eyeBtn.addEventListener("click", () => {
+      pwdVisible = !pwdVisible;
+      pwdInput.type   = pwdVisible ? "text" : "password";
+      eyeIcon.innerHTML = pwdVisible ? eyeClosed : eyeOpen;
+    });
+
+    // ── Error display ─────────────────────────────────────────────────────────
+    const errorMsg  = document.getElementById("errorMsg");
+    const errorText = document.getElementById("errorText");
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      errorMsg.classList.add("show");
+    }
+    function hideError() {
+      errorMsg.classList.remove("show");
+    }
+
+    // ── Login form submit ─────────────────────────────────────────────────────
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn  = document.getElementById("loginBtn");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) {
+        showError("نام کاربری و رمز عبور را وارد کنید.");
+        return;
+      }
+
+      loginBtn.classList.add("loading");
+      loginBtn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          showError(data.detail || "نام کاربری یا رمز عبور اشتباه است.");
+          return;
+        }
+
+        // Persist auth data
+        localStorage.setItem("ragbot_token",       data.access_token);
+        localStorage.setItem("ragbot_user_id",     String(data.user_id));
+        localStorage.setItem("ragbot_username",     data.username);
+        localStorage.setItem("ragbot_display_name", data.display_name);
+        localStorage.setItem("ragbot_is_admin",     String(data.is_admin));
+        localStorage.setItem("ragbot_expires_at",   data.expires_at);
+
+        window.location.replace("index.html");
+
+      } catch (err) {
+        showError("خطا در اتصال به سرور: " + (err.message || err));
+      } finally {
+        loginBtn.classList.remove("loading");
+        loginBtn.disabled = false;
+      }
+    });
+
+    // Allow Enter in username field to move to password
+    document.getElementById("username").addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("password").focus();
+      }
+    });
+  </script>
+
+</body>
+</html>

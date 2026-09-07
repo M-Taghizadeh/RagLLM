@@ -9,15 +9,18 @@
 #
 # Quick start (لینوکس — GPU):
 #   1. cp .env.example .env
+#      DOCKER_OLLAMA_URL=http://ollama:11434
 #   2. python scripts/download_embedding.py
 #   3. docker compose --profile linux-gpu up -d --build
-#   4. https://<server-ip>:8443
+#   4. open the published HTTPS port (see nginx service)
 #
 # Quick start (بدون GPU container):
-#   1. cp .env.example .env  و OLLAMA_URL را تنظیم کنید
+#   1. cp .env.example .env
+#      OLLAMA_URL=http://localhost:11434          (manual)
+#      DOCKER_OLLAMA_URL=http://host.docker.internal:11434
 #   2. python scripts/download_embedding.py
 #   3. docker compose up -d --build
-#   4. https://<server-ip>:8443
+#   4. open the published HTTPS port (see nginx service)
 # ─────────────────────────────────────────────────────────────────────────────
 
 networks:
@@ -25,6 +28,26 @@ networks:
     name: ragbot_net
 
 services:
+
+  # ── PostgreSQL database ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ragbot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-ragbot}
+      POSTGRES_USER:     ${POSTGRES_USER:-ragbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ragbot_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ragbot_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ragbot} -d ${POSTGRES_DB:-ragbot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # ── RagBot FastAPI backend ──────────────────────────────────────────────────
   ragbot:
@@ -44,15 +67,27 @@ services:
       - .env
     environment:
       - DB_PATH=/app/data/ragbot.db
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ragbot}:${POSTGRES_PASSWORD:-ragbot_secret}@postgres:5432/${POSTGRES_DB:-ragbot}
+      # Override OLLAMA_URL from env_file: inside the container localhost ≠ host
+      # Manual (.env): OLLAMA_URL=http://localhost:11434
+      # Docker host Ollama: DOCKER_OLLAMA_URL=http://host.docker.internal:11434
+      # Docker profile linux-gpu: DOCKER_OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=${DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}
+      - JWT_SECRET=${JWT_SECRET:-change_this_secret_in_production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     volumes:
       - ./models:/app/models:ro
       - faiss_data:/app/backend/faiss_db
       - sqlite_data:/app/data
+      - uploads_data:/app/data/uploads
     networks:
       - ragbot_net
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      postgres:
+        condition: service_healthy
       ollama:
         condition: service_healthy
         required: false
@@ -122,3 +157,7 @@ volumes:
     name: ragbot_faiss_data
   sqlite_data:
     name: ragbot_sqlite_data
+  postgres_data:
+    name: ragbot_postgres_data
+  uploads_data:
+    name: ragbot_uploads_data

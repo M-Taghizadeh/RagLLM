@@ -4,8 +4,9 @@ A locally-hosted RAG (Retrieval-Augmented Generation) system with a decoupled Ba
 
 | Layer | Technology |
 |-------|------------|
-| Backend | FastAPI + SSE streaming |
+| Backend | FastAPI + SSE streaming + JWT auth |
 | Frontend | HTML / CSS / JS (RTL, no build step) |
+| Auth DB | **PostgreSQL** (users, sessions, collections) |
 | Vector Store | **FAISS** (on-disk) |
 | Retrieval | **Hybrid**: Dense (FAISS) + Sparse (BM25) + RRF |
 | Embedding | **BAAI/bge-m3** (local) |
@@ -80,13 +81,35 @@ RagBot/
 ## Prerequisites
 
 - Python **3.11+**
+- **PostgreSQL** running (see `DATABASE_URL` in `.env`)
 - [Ollama](https://ollama.com/download) installed and running
-- LLM model pulled: `ollama pull qwen2.5:14b`
+- LLM model pulled (example: `ollama pull gemma3:4b`)
 - (Optional) CUDA-capable GPU for faster embedding generation
+
+For Docker deployment see [DOCKER.md](DOCKER.md).
 
 ---
 
-## 1) Install Dependencies
+## 1) Configure environment + PostgreSQL
+
+```powershell
+copy .env.example .env
+```
+
+Edit `.env`:
+
+- `DATABASE_URL` — must match your local Postgres
+- `OLLAMA_URL=http://localhost:11434` for manual runs
+- `JWT_SECRET` / `ADMIN_USERNAME` / `ADMIN_PASSWORD`
+
+Create the database/user if needed (example):
+
+```sql
+CREATE USER ragbot WITH PASSWORD 'change_this_password';
+CREATE DATABASE ragbot OWNER ragbot;
+```
+
+## 2) Install Dependencies
 
 ```powershell
 cd RagBot\backend
@@ -132,13 +155,16 @@ A successful setup prints `True` followed by your GPU's name.
 
 ```powershell
 pip install -r requirements.txt
+pip install faiss-cpu
 ```
+
+(Use `faiss-gpu` instead if you installed a CUDA torch build and want GPU FAISS.)
 
 `sentence-transformers` will detect the `torch` build already installed (GPU or CPU) and use it as-is — no separate configuration is needed for BGE-M3 to run on GPU.
 
 ---
 
-## 2) Download the Embedding Model (BGE-M3)
+## 3) Download the Embedding Model (BGE-M3)
 
 The model is approximately **2 GB** and must be placed at `models/bge-m3`.
 
@@ -183,7 +209,7 @@ RagBot/models/bge-m3/
 
 ---
 
-## 3) Run the Backend
+## 4) Run the Backend
 
 ```powershell
 cd RagBot\backend
@@ -191,11 +217,12 @@ cd RagBot\backend
 uvicorn main:app --reload --port 8000
 ```
 
-- Web UI: http://localhost:8000
+- Login UI: http://localhost:8000/login.html
+- Web UI (after login): http://localhost:8000
 - API docs: http://localhost:8000/docs
 - Health check: http://localhost:8000/api/health
 
-The frontend is served directly by FastAPI from the `frontend` folder — no separate server is required.
+The frontend is served directly by FastAPI from the `frontend` folder — no separate server is required. On first startup the default admin account from `.env` is created automatically.
 
 ---
 
@@ -219,6 +246,8 @@ Keyword-based alert rules, URL/RSS scanning with LLM-based matching, and results
 
 | Method | Path | Description |
 |--------|------|-------------|
+| POST | `/api/auth/login` | Login (JWT) |
+| GET  | `/api/auth/me` | Current user |
 | POST | `/api/chat/stream` | Stream chat response |
 | POST | `/api/chat/models` | List available Ollama models |
 | POST | `/api/rag/index/stream` | Upload and index a PDF (SSE) |

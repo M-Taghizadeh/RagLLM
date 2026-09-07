@@ -1,44 +1,44 @@
-# --- Web framework ---
-fastapi
-uvicorn[standard]
-python-multipart
+# Web framework
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-multipart==0.0.20
 
-# --- LangChain stack ---
-langchain
-langchain-core
-langchain-community
-langchain-ollama
-langchain-text-splitters
+# Auth & Security
+PyJWT==2.10.1
+bcrypt==4.3.0
 
-# --- Vector DB + hybrid retrieval ---
-# faiss را اینجا اضافه نکنید!
-# در Docker، Dockerfile مدیریت نصب faiss-cpu یا faiss-gpu را بر عهده دارد (بسته به USE_CUDA).
-# در محیط local:
-#   CPU:  pip install faiss-cpu
-#   GPU:  pip install faiss-gpu
-rank-bm25
+# Database (PostgreSQL async)
+sqlalchemy[asyncio]==2.0.40
+asyncpg==0.30.0
 
-# --- Embeddings (BGE-M3 via sentence-transformers) ---
-sentence-transformers
-# torch را اینجا اضافه نکنید!
-# در Docker، torch قبل از این فایل با index صحیح CUDA نصب می‌شود (Dockerfile).
-# در محیط local:
-#   CPU:  pip install torch --index-url https://download.pytorch.org/whl/cpu
-#   GPU:  pip install torch --index-url https://download.pytorch.org/whl/cu124
+# LangChain stack
+langchain==0.3.25
+langchain-core>=0.3.59
+langchain-community==0.3.24
+langchain-ollama==0.3.3
+langchain-text-splitters==0.3.8
 
-# --- PDF loading ---
-pypdf
+# Hybrid retrieval
+# NOTE: faiss-cpu or faiss-gpu must be installed separately (see README)
+rank-bm25==0.2.2
 
-# --- Word loading ---
-python-docx
-docx2txt
+# Embeddings
+# NOTE: torch must be installed separately with the correct index URL
+sentence-transformers==4.1.0
 
-# --- Web crawling / search ---
-requests
-beautifulsoup4
-ddgs
-feedparser
-lxml
+# PDF loading
+pypdf==5.4.0
 
-# --- Model download helper ---
-huggingface-hub
+# Word loading
+python-docx==1.1.2
+docx2txt==0.8
+
+# Web crawling / search
+requests==2.32.3
+beautifulsoup4==4.13.4
+ddgs==9.3.1
+feedparser==6.0.11
+lxml==5.3.2
+
+# Model download helper
+huggingface-hub==0.30.2

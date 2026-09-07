@@ -367,7 +367,7 @@
     docsModalBackdrop$.removeAttribute("aria-hidden");
 
     apiGet(`/rag/collections/${encodeURIComponent(collection)}/documents`)
-      .then(data => renderDocsModal(data))
+      .then(data => renderDocsModal(data, collection))
       .catch(err => {
         docsModalBody$.innerHTML = `<div class="docs-modal-error">❌ خطا در بارگذاری: ${escHtml(String(err.message || err))}</div>`;
       });
@@ -378,7 +378,7 @@
     docsModalBackdrop$.setAttribute("aria-hidden", "true");
   }
 
-  function renderDocsModal(data) {
+  function renderDocsModal(data, collection) {
     const docs = data.documents || [];
     if (!docs.length) {
       docsModalBody$.innerHTML = `<div class="docs-modal-empty">هیچ سندی در این مجموعه یافت نشد.</div>`;
@@ -426,8 +426,27 @@
               ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
             </div>
           </div>
+          <button type="button" class="btn-secondary doc-open-btn" title="باز کردن فایل">باز کردن</button>
         </div>
         ${preview}`;
+
+      card.classList.add("doc-card-clickable");
+      const openFile = async () => {
+        try {
+          await apiOpenFile(
+            `/rag/collections/${encodeURIComponent(collection)}/files/${encodeURIComponent(doc.filename)}/download`,
+            doc.filename,
+            { inline: true },
+          );
+        } catch (err) {
+          setStatus(status$, "خطا در باز کردن فایل: " + (err.message || err), "error");
+        }
+      };
+      card.addEventListener("click", openFile);
+      card.querySelector(".doc-open-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openFile();
+      });
 
       docsModalBody$.appendChild(card);
     });
@@ -482,11 +501,13 @@
     form.append("job_id", currentJobId);
 
     fetch(`${API_BASE}/rag/index/stream`, {
-      method: "POST",
-      body:   form,
-      signal: indexAbort.signal,
+      method:  "POST",
+      headers: _authHeaders(),
+      body:    form,
+      signal:  indexAbort.signal,
     })
     .then(res => {
+      if (res.status === 401) { _handle401(); return; }
       if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
 
       const reader  = res.body.getReader();
@@ -618,7 +639,7 @@
 
     fetch(`${API_BASE}/rag/chat/stream`, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: _authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         message: text, collection, session_id: sessionId,
         model, ollama_url: ollamaUrl, temperature, use_web: useWeb,
@@ -626,6 +647,7 @@
       signal: chatAbort.signal,
     })
     .then(res => {
+      if (res.status === 401) { _handle401(); return; }
       if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
 
       const reader  = res.body.getReader();
@@ -691,10 +713,189 @@
 
   clear$.addEventListener("click", async () => {
     stopChat();
+    const prev = sessionId;
     chatWindow$.innerHTML = "";
     sessionId = newSessionId("rag");
-    try { await apiPost(`/rag/clear?session_id=${sessionId}`); } catch {}
+    try { await apiPost(`/rag/clear?session_id=${encodeURIComponent(prev)}`); } catch {}
+    setStatus(status$, "گفتگوی جدید شروع شد.", "ok");
   });
 
   loadCollections();
+
+  // ── History Panel (ChatGPT-style threads) ─────────────────────────────────
+  const historyBackdrop$   = document.getElementById("historyBackdrop");
+  const historyPanel$      = document.getElementById("historyPanel");
+  const historyBody$       = document.getElementById("historyPanelBody");
+  const historyLoading$    = document.getElementById("historyLoading");
+  const historyClose$      = document.getElementById("historyClose");
+  const historyColBadge$   = document.getElementById("historyColBadge");
+  const clearHistoryBtn$   = document.getElementById("clearHistoryBtn");
+  const newChatHistoryBtn$ = document.getElementById("newChatHistoryBtn");
+  const ragHistoryBtn$     = document.getElementById("ragHistoryBtn");
+
+  function openHistory() {
+    const colId = collectionIn$.value;
+    const colName = dropLabel$.textContent || colId;
+    if (!colId) {
+      setStatus(status$, "ابتدا یک مجموعه انتخاب کنید.", "warn");
+      return;
+    }
+    historyColBadge$.textContent = colName;
+    historyBackdrop$.classList.add("open");
+    historyBackdrop$.removeAttribute("aria-hidden");
+    loadHistorySessions(colId);
+  }
+
+  function closeHistory() {
+    historyBackdrop$.classList.remove("open");
+    historyBackdrop$.setAttribute("aria-hidden", "true");
+  }
+
+  async function loadHistorySessions(colId) {
+    historyBody$.innerHTML = "";
+    historyLoading$.style.display = "flex";
+    historyBody$.appendChild(historyLoading$);
+    try {
+      const data = await apiGet(`/rag/collections/${encodeURIComponent(colId)}/history/sessions`);
+      renderHistorySessions(colId, data.sessions || []);
+    } catch (err) {
+      historyBody$.innerHTML = `<div style="padding:20px;color:var(--danger);font-size:13px">❌ خطا: ${escHtml(err.message)}</div>`;
+    } finally {
+      historyLoading$.style.display = "none";
+    }
+  }
+
+  function renderHistorySessions(colId, sessions) {
+    historyBody$.innerHTML = "";
+    if (!sessions.length) {
+      historyBody$.innerHTML = `<div style="padding:28px;text-align:center;color:var(--ink-muted);font-size:13px">هنوز هیچ گفتگویی ثبت نشده.<br><small>بعد از چند پیام، اینجا ظاهر می‌شود.</small></div>`;
+      return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "history-session-list";
+
+    sessions.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "history-session-card" + (s.session_key === sessionId ? " active" : "");
+      card.innerHTML = `
+        <div class="history-session-main">
+          <div class="history-session-title">${escHtml(s.title || "گفتگوی بدون عنوان")}</div>
+          <div class="history-session-meta">
+            <span>${fmtDate(s.updated_at)}</span>
+            <span>·</span>
+            <span>${s.message_count} پیام</span>
+          </div>
+        </div>
+        <button type="button" class="history-session-delete btn-danger" title="حذف این گفتگو" aria-label="حذف">
+          <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
+        </button>`;
+
+      card.querySelector(".history-session-main").addEventListener("click", () => {
+        resumeSession(colId, s.session_key);
+      });
+
+      card.querySelector(".history-session-delete").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        if (!btn.classList.contains("confirming")) {
+          btn.classList.add("confirming");
+          btn.title = "کلیک مجدد برای تأیید";
+          setTimeout(() => btn.classList.remove("confirming"), 2500);
+          return;
+        }
+        btn.disabled = true;
+        try {
+          await apiDelete(`/rag/collections/${encodeURIComponent(colId)}/history/sessions/${encodeURIComponent(s.session_key)}`);
+          if (sessionId === s.session_key) {
+            chatWindow$.innerHTML = "";
+            sessionId = newSessionId("rag");
+          }
+          card.remove();
+          if (!list.children.length) {
+            historyBody$.innerHTML = `<div style="padding:28px;text-align:center;color:var(--ink-muted);font-size:13px">همه گفتگوها حذف شدند.</div>`;
+          }
+        } catch (err) {
+          btn.disabled = false;
+          alert("خطا در حذف: " + err.message);
+        }
+      });
+
+      list.appendChild(card);
+    });
+
+    historyBody$.appendChild(list);
+  }
+
+  async function resumeSession(colId, sessionKey) {
+    try {
+      const data = await apiGet(
+        `/rag/collections/${encodeURIComponent(colId)}/history?session=${encodeURIComponent(sessionKey)}&limit=100`
+      );
+      const items = (data.history || []).slice().sort((a, b) => (a.id || 0) - (b.id || 0));
+      stopChat();
+      chatWindow$.innerHTML = "";
+      sessionId = sessionKey;
+
+      items.forEach(item => {
+        const { wrap } = appendMessage(item.role, item.content);
+        if (item.role === "assistant" && item.sources?.length) {
+          appendSources(wrap, item.sources);
+        }
+      });
+
+      try {
+        await apiPost(
+          `/rag/collections/${encodeURIComponent(colId)}/history/sessions/${encodeURIComponent(sessionKey)}/hydrate`
+        );
+      } catch (_) { /* hydrate optional if empty memory is acceptable */ }
+
+      closeHistory();
+      setStatus(status$, "گفتگو بازیابی شد — می‌توانید ادامه دهید.", "ok");
+      input$.focus();
+    } catch (err) {
+      alert("خطا در باز کردن گفتگو: " + err.message);
+    }
+  }
+
+  async function startNewChatFromHistory() {
+    stopChat();
+    const prev = sessionId;
+    chatWindow$.innerHTML = "";
+    sessionId = newSessionId("rag");
+    try { await apiPost(`/rag/clear?session_id=${encodeURIComponent(prev)}`); } catch {}
+    closeHistory();
+    setStatus(status$, "گفتگوی جدید شروع شد.", "ok");
+    input$.focus();
+  }
+
+  clearHistoryBtn$.addEventListener("click", async () => {
+    const colId = collectionIn$.value;
+    if (!colId) return;
+    if (!confirm("همه گفتگوهای این مجموعه پاک شوند؟")) return;
+    clearHistoryBtn$.disabled = true;
+    try {
+      await apiDelete(`/rag/collections/${encodeURIComponent(colId)}/history`);
+      historyBody$.innerHTML = `<div style="padding:28px;text-align:center;color:var(--ink-muted);font-size:13px">تاریخچه پاک شد.</div>`;
+      chatWindow$.innerHTML = "";
+      sessionId = newSessionId("rag");
+    } catch (err) {
+      alert("خطا: " + err.message);
+    } finally {
+      clearHistoryBtn$.disabled = false;
+    }
+  });
+
+  if (newChatHistoryBtn$) {
+    newChatHistoryBtn$.addEventListener("click", startNewChatFromHistory);
+  }
+  ragHistoryBtn$.addEventListener("click",  openHistory);
+  historyClose$.addEventListener("click",   closeHistory);
+  historyBackdrop$.addEventListener("click", e => {
+    if (e.target === historyBackdrop$) closeHistory();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && historyBackdrop$.classList.contains("open")) closeHistory();
+  });
+
 })();

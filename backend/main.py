@@ -1,84 +1,52 @@
 """
 RagBot - FastAPI Backend
-RESTful API with SSE streaming for all 4 modules
+RESTful API with SSE streaming for all 4 modules + JWT auth + PostgreSQL
 """
 
-import sqlite3
 import os
+import threading
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from routers import chat, rag, article, alerts
+from routers import auth as auth_router
 from services.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K
 
-# ── Fix: increase multipart part size to 500MB for PDF uploads ──────────────
-# Starlette 0.46 uses MultiPartParser.max_part_size (default 1MB) — override it
+# ── Fix: increase multipart part size to 500 MB for PDF uploads ──────────────
 from starlette.formparsers import MultiPartParser
-MultiPartParser.max_part_size = 500 * 1024 * 1024  # 500 MB
-
-DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "ragbot.db"))
-
-
-def init_db():
-    """Initialize SQLite database with required tables."""
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    # Alert rules table
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS alert_rules (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            name        TEXT NOT NULL,
-            category    TEXT NOT NULL,
-            keywords    TEXT NOT NULL,
-            description TEXT,
-            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Alert results table — stores scan results
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS alert_results (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            rule_id     INTEGER NOT NULL,
-            source_url  TEXT NOT NULL,
-            title       TEXT,
-            excerpt     TEXT,
-            matched_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (rule_id) REFERENCES alert_rules(id) ON DELETE CASCADE
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+MultiPartParser.max_part_size = 500 * 1024 * 1024
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    # Pre-warm BGE-M3 embedding model on startup
-    import threading
+    # 1. Init PostgreSQL tables
+    from services.database import init_db as pg_init
+    await pg_init()
 
-    def _warm_embeddings():
+    # 2. Ensure default admin account exists
+    from services.auth import ensure_admin_exists
+    await ensure_admin_exists()
+
+    # 3. Pre-warm BGE-M3 embedding model
+    def _warm():
         try:
             from services.embeddings import BGEEmbeddings
-
-            e = BGEEmbeddings.get_instance()
-            e.embed_query("warmup")
+            BGEEmbeddings.get_instance().embed_query("warmup")
             print("[startup] BGE-M3 embedding model loaded and ready.")
         except Exception as ex:
             print(f"[startup] Warning: could not pre-load BGE-M3: {ex}")
 
-    threading.Thread(target=_warm_embeddings, daemon=True).start()
+    threading.Thread(target=_warm, daemon=True).start()
     yield
 
 
 app = FastAPI(
     title="RagBot API",
     description="سامانه RAG محلی با FAISS + BGE-M3 + Ollama",
-    version="4.0.0",
+    version="5.0.0",
     lifespan=lifespan,
 )
 
@@ -90,28 +58,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount routers
-app.include_router(chat.router,    prefix="/api/chat",    tags=["Chat"])
-app.include_router(rag.router,     prefix="/api/rag",     tags=["RAG"])
-app.include_router(article.router, prefix="/api/article", tags=["Article"])
-app.include_router(alerts.router,  prefix="/api/alerts",  tags=["Alerts"])
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth_router.router, prefix="/api/auth",    tags=["Auth"])
+app.include_router(chat.router,        prefix="/api/chat",    tags=["Chat"])
+app.include_router(rag.router,         prefix="/api/rag",     tags=["RAG"])
+app.include_router(article.router,     prefix="/api/article", tags=["Article"])
+app.include_router(alerts.router,      prefix="/api/alerts",  tags=["Alerts"])
+
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "version": "4.0.0", "embedding": "bge-m3", "vectorstore": "faiss"}
+    return {"status": "ok", "version": "5.0.0", "embedding": "bge-m3", "vectorstore": "faiss"}
 
 
 @app.get("/api/config")
 def get_config():
-    """Return frontend-relevant config values loaded from .env"""
     return {
-        "default_model": DEFAULT_MODEL,
-        "ollama_url":    DEFAULT_OLLAMA_URL,
-        "default_top_k": DEFAULT_TOP_K,
+        "default_model":  DEFAULT_MODEL,
+        "ollama_url":     DEFAULT_OLLAMA_URL,
+        "default_top_k":  DEFAULT_TOP_K,
     }
 
 
-# Serve frontend static files — mount LAST so /api/* routes take priority
+# ── Serve frontend static files (mount LAST) ─────────────────────────────────
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 if os.path.isdir(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
