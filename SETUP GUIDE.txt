@@ -19,7 +19,7 @@
 >> pip install faiss-cpu
    (or faiss-gpu if you use CUDA faiss)
 >> python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
->> if you have error on torch: pip install torch --upgrade
+>> if you have error on torch: pip install "torch>=2.6"
 
 4) Embedding model
 >> cd ..
