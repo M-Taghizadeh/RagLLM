@@ -26,5 +26,6 @@ Thumbs.db
 dev/
 hybrid_rag_llm.ipynb
 faiss_db_cli/
-nginx/
+# Keep nginx.conf in repo; ignore only local TLS keys/certs
+nginx/certs/*.pem
 data/

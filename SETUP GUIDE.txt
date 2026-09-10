@@ -1,32 +1,87 @@
 [First SETUP — Manual]
 
+
+
 1) PostgreSQL
+
    - Create DB/user matching DATABASE_URL in .env
+
    - Example default: postgresql+asyncpg://ragbot:change_this_password@localhost:5432/ragbot
 
+
+
 2) Ollama
+
    - Install and run Ollama on the host
+
    - Pull a model, e.g. ollama pull gemma3:4b
+
    - Keep OLLAMA_URL=http://localhost:11434 in .env
 
+
+
 3) Python venv + deps
+
 >> cd .\backend\
+
 >> python -m venv venv
+
 >> .\venv\Scripts\activate
+
 >> python -m pip install --upgrade pip setuptools wheel
+
 >> pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+
 >> pip install -r requirements.txt
+
 >> pip install faiss-cpu (or faiss-gpu if you use CUDA faiss)
+
 >> uvicorn main:app --reload --port 8000
+
 >> python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
+
 >> if you have error on torch: pip install "torch>=2.6"
 
+
+
 4) Embedding model
+
 >> cd ..
+
 >> python .\scripts\download_embedding.py
 
-[Docker — quick]
->> cp .env.example .env   (then set secrets + DOCKER_OLLAMA_URL)
+
+
+[Docker — mirrors the same stack + nginx + postgres]
+
+
+
+>> cp .env.example .env
+
+>>  set secrets + DOCKER_OLLAMA_URL
+
+>>    Windows (Ollama on host): DOCKER_OLLAMA_URL=http://host.docker.internal:11434
+
+>>    Linux GPU profile:        DOCKER_OLLAMA_URL=http://ollama:11434
+
 >> python scripts\download_embedding.py
+
+>>  (optional once) openssl self-signed certs into nginx\certs\  — see DOCKER.md
+
 >> docker compose up -d --build
-   See DOCKER.md for GPU / Ollama profile details.
+
+>> open https://localhost:7443
+
+
+
+Notes:
+
+- Compose starts postgres automatically (no manual DB install).
+
+- Dockerfile install order = Manual step 3 (torch → requirements → faiss).
+
+- nginx terminates HTTPS on host port 7443.
+
+- See DOCKER.md for GPU / Ollama profile details.
+
+

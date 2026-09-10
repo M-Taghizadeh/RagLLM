@@ -1,0 +1,16 @@
+# Optional GPU override for ragbot embeddings (faiss-gpu + CUDA torch).
+# Use together with USE_CUDA=1 build:
+#
+#   USE_CUDA=1 DOCKER_RUNTIME=nvidia \
+#     docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+#
+# Or with linux-gpu Ollama profile:
+#
+#   USE_CUDA=1 DOCKER_RUNTIME=nvidia \
+#     docker compose --profile linux-gpu \
+#       -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+
+services:
+  ragbot:
+    gpus: all
+    runtime: nvidia
