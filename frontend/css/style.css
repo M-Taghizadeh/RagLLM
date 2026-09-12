@@ -344,7 +344,7 @@ body {
 .source-item strong { color: var(--teal-deep); display: block; margin-bottom: 2px; }
 
 .typing-cursor::after {
-  content: "â–Œ";
+  content: "\258C";
   animation: blink 0.7s infinite;
   color: var(--teal);
 }
