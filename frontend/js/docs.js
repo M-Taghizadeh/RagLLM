@@ -339,33 +339,41 @@
       if (doc.page_count != null) metaParts.push(`${doc.page_count} صفحه`);
       metaParts.push(`${doc.chunk_count} قطعه`);
 
-      const row = document.createElement("div");
-      row.className = "docs-detail-file-row";
-      row.innerHTML = `
-        <div class="docs-detail-file-icon ${isPdf ? "icon-pdf" : "icon-word"}">
-          ${isPdf
-            ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
-            : `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`}
-        </div>
-        <div class="docs-detail-file-info">
-          <div class="docs-detail-file-name" title="${escHtml(doc.filename)}">${escHtml(doc.filename)}</div>
-          <div class="docs-detail-file-meta">
-            <span class="doc-badge ${typeCls}">${typeLabel}</span>
-            ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
+      const typeIcon = isPdf
+        ? `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`;
+
+      const preview = doc.preview
+        ? `<div class="doc-preview-text">${escHtml(doc.preview)}${doc.preview.length >= 300 ? "…" : ""}</div>`
+        : "";
+
+      const card = document.createElement("div");
+      card.className = "doc-card doc-card-clickable docs-detail-file-card";
+      card.title = "کلیک برای مشاهده فایل";
+      card.innerHTML = `
+        <div class="doc-card-header">
+          <span class="doc-icon ${isPdf ? "doc-icon-pdf" : "doc-icon-word"}">${typeIcon}</span>
+          <div class="doc-card-info">
+            <div class="doc-filename" title="${escHtml(doc.filename)}">${escHtml(doc.filename)}</div>
+            <div class="doc-meta">
+              <span class="doc-badge ${typeCls}">${typeLabel}</span>
+              ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
+            </div>
+          </div>
+          <div class="docs-detail-file-actions">
+            <button class="docs-detail-open-file-btn btn-secondary" data-filename="${escHtml(doc.filename)}" title="مشاهده فایل در سامانه" type="button">
+              <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4H4v12h12v-4"/><path d="M10 10l6-6M12 4h4v4"/></svg>
+              مشاهده
+            </button>
+            <button class="docs-detail-delete-file-btn btn-danger" data-filename="${escHtml(doc.filename)}" title="حذف این فایل" type="button">
+              <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
+              حذف
+            </button>
           </div>
         </div>
-        <button class="docs-detail-open-file-btn btn-secondary" data-filename="${escHtml(doc.filename)}" title="مشاهده فایل در سامانه" type="button">
-          <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4H4v12h12v-4"/><path d="M10 10l6-6M12 4h4v4"/></svg>
-          مشاهده
-        </button>
-        <button class="docs-detail-delete-file-btn btn-danger" data-filename="${escHtml(doc.filename)}" title="حذف این فایل" type="button">
-          <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
-          حذف
-        </button>`;
+        ${preview}`;
 
-      row.classList.add("docs-detail-file-row-clickable");
-      row.title = "کلیک برای مشاهده";
-      row.addEventListener("click", async () => {
+      const openFile = async () => {
         try {
           await apiOpenFile(
             `/rag/collections/${encodeURIComponent(activeCollection.id)}/files/${encodeURIComponent(doc.filename)}/download`,
@@ -375,22 +383,15 @@
         } catch (err) {
           setStatus(detailUploadStatus$, "خطا در باز کردن فایل: " + (err.message || err), "error");
         }
-      });
+      };
 
-      row.querySelector(".docs-detail-open-file-btn").addEventListener("click", async (e) => {
+      card.addEventListener("click", openFile);
+      card.querySelector(".docs-detail-open-file-btn").addEventListener("click", (e) => {
         e.stopPropagation();
-        try {
-          await apiOpenFile(
-            `/rag/collections/${encodeURIComponent(activeCollection.id)}/files/${encodeURIComponent(doc.filename)}/download`,
-            doc.filename,
-            { inline: true },
-          );
-        } catch (err) {
-          setStatus(detailUploadStatus$, "خطا در باز کردن فایل: " + (err.message || err), "error");
-        }
+        openFile();
       });
 
-      row.querySelector(".docs-detail-delete-file-btn").addEventListener("click", async (e) => {
+      card.querySelector(".docs-detail-delete-file-btn").addEventListener("click", async (e) => {
         e.stopPropagation();
         const btn      = e.currentTarget;
         const fname    = doc.filename;
@@ -401,11 +402,11 @@
         btn.classList.add("confirming");
         btn.onclick = async () => {
           btn.disabled = true;
-          row.style.opacity = "0.5";
+          card.style.opacity = "0.5";
           try {
             await apiDelete(`/rag/collections/${encodeURIComponent(activeCollection.id)}/files/${encodeURIComponent(fname)}`);
-            row.classList.add("docs-row-removing");
-            row.addEventListener("animationend", () => row.remove());
+            card.classList.add("docs-row-removing");
+            card.addEventListener("animationend", () => card.remove());
             detailFiles = detailFiles.filter(f => f.filename !== fname);
             const totalChunks = detailFiles.reduce((s, d) => s + d.chunk_count, 0);
             detailMeta$.textContent = `${detailFiles.length} سند · ${totalChunks.toLocaleString("fa")} قطعه`;
@@ -418,7 +419,7 @@
               closeDetailModal();
             }
           } catch (err) {
-            row.style.opacity = "";
+            card.style.opacity = "";
             btn.disabled      = false;
             btn.innerHTML     = original;
             btn.classList.remove("confirming");
@@ -436,7 +437,7 @@
         setTimeout(() => document.addEventListener("click", cancel, { once: true }), 50);
       });
 
-      list.appendChild(row);
+      list.appendChild(card);
     });
 
     detailBody$.appendChild(list);
@@ -769,6 +770,9 @@
   // ── Global keyboard close ──────────────────────────────────────────────────
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
+    // File viewer sits above detail — let it handle Escape first
+    const viewer$ = document.getElementById("fileViewerBackdrop");
+    if (viewer$ && viewer$.classList.contains("open")) return;
     if (detailBackdrop$.classList.contains("open")) { closeDetailModal(); return; }
     if (colModal$.classList.contains("open"))       { closeColModal();    return; }
   });

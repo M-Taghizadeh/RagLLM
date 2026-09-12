@@ -457,7 +457,10 @@
     if (e.target === docsModalBackdrop$) closeDocsModal();
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && docsModalBackdrop$.classList.contains("open")) closeDocsModal();
+    if (e.key !== "Escape" || !docsModalBackdrop$.classList.contains("open")) return;
+    const viewer$ = document.getElementById("fileViewerBackdrop");
+    if (viewer$ && viewer$.classList.contains("open")) return;
+    closeDocsModal();
   });
 
   async function loadCollections() {

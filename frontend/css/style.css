@@ -1791,7 +1791,7 @@ textarea.field-input { resize: vertical; }
   font-weight: 500;
 }
 .doc-meta-item::before {
-  content: "Â·";
+  content: "\00B7"; /* middle dot separator */
   margin-left: 6px;
   opacity: .5;
 }
@@ -2121,7 +2121,7 @@ textarea.field-input { resize: vertical; }
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .docs-detail-backdrop .modal {
-  max-width: 680px;
+  max-width: 720px;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
@@ -2198,66 +2198,28 @@ textarea.field-input { resize: vertical; }
 .docs-detail-file-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.docs-detail-file-row {
+.docs-detail-file-card {
+  margin-bottom: 0;
+}
+.docs-detail-file-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--elevated);
-  border: 1px solid var(--border);
-  transition: border-color var(--transition);
-}
-.docs-detail-file-row:hover { border-color: var(--teal); }
-.docs-detail-file-row-clickable { cursor: pointer; }
-.docs-detail-file-row-clickable:hover { background: var(--teal-soft); }
-
-.docs-detail-open-file-btn {
+  gap: 6px;
   flex-shrink: 0;
-  font-size: 11.5px;
-  padding: 4px 9px;
+  align-self: flex-start;
 }
-
-.docs-detail-file-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.icon-pdf  { background: rgba(220,53,69,.1);  color: #dc3545; border: 1px solid rgba(220,53,69,.18); }
-.icon-word { background: rgba(13,110,253,.1);  color: #0d6efd; border: 1px solid rgba(13,110,253,.18); }
-
-.docs-detail-file-info {
-  flex: 1;
-  min-width: 0;
-}
-.docs-detail-file-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  direction: ltr;
-  text-align: left;
-  margin-bottom: 4px;
-}
-.docs-detail-file-meta {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
+.docs-detail-open-file-btn,
 .docs-detail-delete-file-btn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
   padding: 4px 9px;
+  line-height: 1.2;
 }
 .docs-detail-delete-file-btn.confirming {
   background: var(--danger);

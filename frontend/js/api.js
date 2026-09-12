@@ -278,7 +278,10 @@ async function openFileViewer(downloadPath, filename = "file") {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         const b = document.getElementById("fileViewerBackdrop");
-        if (b && b.classList.contains("open")) closeFileViewer();
+        if (b && b.classList.contains("open")) {
+          e.stopImmediatePropagation();
+          closeFileViewer();
+        }
       }
     });
   };
