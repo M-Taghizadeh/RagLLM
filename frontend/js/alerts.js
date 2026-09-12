@@ -165,24 +165,43 @@
     const name     = ruleName$.value.trim();
     const category = ruleCategory$.value.trim();
     const keywords = ruleKeywords$.value.trim();
+    const description = ruleDescription$.value.trim();
     if (!name || !category || !keywords) {
       setStatus(scanStatus$, "نام، دسته‌بندی و کلیدواژه‌ها الزامی است.", "warn");
       return;
     }
-    const body   = { name, category, keywords, description: ruleDescription$.value.trim() };
-    const method = editingId ? "PUT" : "POST";
-    const path   = editingId ? `/alerts/rules/${editingId}` : "/alerts/rules";
+    const body = { name, category, keywords, description };
+    const wasEditing = editingId;
     try {
-      const res = await fetch(`${API_BASE}${path}`, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+      ruleSave$.disabled = true;
+      if (wasEditing) {
+        const res = await fetch(`${API_BASE}/alerts/rules/${wasEditing}`, {
+          method: "PUT",
+          headers: _authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(body),
+        });
+        await _checkOk(res);
+        const idx = rules.findIndex(r => r.id === wasEditing);
+        if (idx >= 0) rules[idx] = { ...rules[idx], ...body };
+      } else {
+        const data = await apiPost("/alerts/rules", body);
+        rules.unshift({
+          id: data.id,
+          name,
+          category,
+          keywords,
+          description,
+          created_at: new Date().toISOString(),
+        });
+      }
+      renderRules();
+      renderScanCheckboxes();
       closeForm();
       loadRules();
     } catch (e) {
       setStatus(scanStatus$, `❌ خطا در ذخیره: ${e.message}`, "error");
+    } finally {
+      ruleSave$.disabled = false;
     }
   });
 

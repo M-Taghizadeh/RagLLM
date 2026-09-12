@@ -31,6 +31,10 @@ async def lifespan(app: FastAPI):
     from services.database import init_db as pg_init
     await pg_init()
 
+    # 1b. Init SQLite tables used by news alerts
+    from routers.alerts import init_alerts_db
+    init_alerts_db()
+
     # 2. Ensure default admin account exists
     from services.auth import ensure_admin_exists
     await ensure_admin_exists()
