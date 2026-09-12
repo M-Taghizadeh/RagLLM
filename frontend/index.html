@@ -51,65 +51,11 @@
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 016 6c0 4 2 5 2 5H4s2-1 2-5a6 6 0 016-6z"/><path d="M10 19a2 2 0 004 0"/></svg>
         <span class="nav-label">سیستم هشدار دهی خبری</span>
       </button>
+      <button class="nav-item" data-section="settings">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9c.1.7.7 1.2 1.5 1.3H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+        <span class="nav-label">تنظیمات مدل زبانی</span>
+      </button>
     </nav>
-
-    <div class="sidebar-settings">
-      <div class="settings-title">تنظیمات</div>
-
-      <!-- Ollama URL -->
-      <div class="setting-row">
-        <span class="setting-row-lbl">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>
-          آدرس
-        </span>
-        <input type="text" id="ollamaUrl" class="setting-row-input" value="http://localhost:11434" title="آدرس Ollama" />
-      </div>
-
-      <!-- Model -->
-      <div class="setting-row setting-row-model">
-        <span class="setting-row-lbl">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5 7h6M5 10h4"/></svg>
-          مدل
-        </span>
-        <div class="setting-row-ctrl">
-          <div class="custom-select-wrap model-select-wrap" id="modelSelectWrap">
-            <button type="button" class="custom-select-btn" id="modelSelectBtn" aria-haspopup="listbox" aria-expanded="false">
-              <span id="modelSelectLabel">بارگذاری...</span>
-              <svg class="caret" viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
-            </button>
-            <ul class="custom-select-list" id="modelSelectList" role="listbox" aria-label="مدل‌های Ollama"></ul>
-            <select id="modelSelect" hidden></select>
-          </div>
-          <button id="refreshModels" class="btn-icon btn-icon-sm" title="بارگذاری مدل‌ها" type="button">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Temperature -->
-      <div class="setting-row">
-        <span class="setting-row-lbl">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 2v7"/><circle cx="8" cy="12" r="2.5"/></svg>
-          خلاقیت
-        </span>
-        <div class="setting-row-ctrl">
-          <input type="range" id="temperature" class="temp-slider" min="0" max="1" step="0.05" value="0.3" style="--pct:30%" />
-          <span id="tempVal" class="temp-badge">0.30</span>
-        </div>
-      </div>
-
-      <!-- Web search toggle -->
-      <div class="setting-row">
-        <span class="setting-row-lbl">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2a9 9 0 010 12M8 2a9 9 0 000 12"/></svg>
-          جستجوی وب
-        </span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="useWeb" />
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    </div>
 
     <div class="sidebar-footer">
       <span>معماری سامانه : Hybrid RAG</span>
@@ -483,6 +429,109 @@
       </div>
     </section>
 
+    <section class="section" id="section-settings">
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">LLM Provider</p>
+          <h1>تنظیمات مدل زبانی</h1>
+        </div>
+        <button class="btn-secondary" id="settingsSaveBtn" type="button">ذخیره تنظیمات</button>
+      </div>
+
+      <div class="settings-page">
+        <div class="settings-active-bar">
+          <div class="settings-active-label" id="settingsActiveLabel">
+            اتصال فعال: <strong id="settingsActiveProvider">Ollama</strong>
+          </div>
+          <button type="button" class="btn-primary settings-activate-btn" id="settingsActivateBtn">
+            فعال‌سازی این حالت
+          </button>
+        </div>
+
+        <div class="settings-provider-tabs" role="tablist">
+          <button type="button" class="settings-provider-tab active" data-provider="ollama" id="providerTabOllama">
+            اتصال Ollama
+          </button>
+          <button type="button" class="settings-provider-tab" data-provider="api" id="providerTabApi">
+            اتصال API
+          </button>
+        </div>
+        <input type="hidden" id="llmProvider" value="ollama" />
+        <input type="hidden" id="llmProviderDraft" value="ollama" />
+
+        <div class="settings-panel" id="settingsPanelOllama">
+          <div class="settings-card">
+            <div class="settings-card-title">Ollama</div>
+            <label class="field-label" for="ollamaUrl">آدرس Ollama</label>
+            <input type="text" id="ollamaUrl" class="field-input" value="http://localhost:11434" placeholder="http://localhost:11434" style="direction:ltr;text-align:left" />
+
+            <label class="field-label" for="modelSelectBtn">مدل</label>
+            <div class="setting-row-ctrl settings-model-row">
+              <div class="custom-select-wrap model-select-wrap" id="modelSelectWrap" style="flex:1">
+                <button type="button" class="custom-select-btn" id="modelSelectBtn" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="modelSelectLabel">بارگذاری...</span>
+                  <svg class="caret" viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+                </button>
+                <ul class="custom-select-list" id="modelSelectList" role="listbox" aria-label="مدل‌های Ollama"></ul>
+                <select id="modelSelect" hidden></select>
+              </div>
+              <button id="refreshModels" class="btn-icon btn-icon-sm" title="بارگذاری مدل‌ها" type="button">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel" id="settingsPanelApi" hidden>
+          <div class="settings-card">
+            <div class="settings-card-title">API سازگار با OpenAI</div>
+            <label class="field-label" for="apiBaseUrl">آدرس API</label>
+            <input type="text" id="apiBaseUrl" class="field-input" value="" placeholder="https://example.com/v1" style="direction:ltr;text-align:left" />
+
+            <label class="field-label" for="apiToken">توکن API</label>
+            <input type="password" id="apiToken" class="field-input" placeholder="توکن را وارد کنید" autocomplete="off" style="direction:ltr;text-align:left" />
+
+            <label class="field-label" for="apiModelInput">شناسه مدل</label>
+            <div class="setting-row-ctrl settings-model-row">
+              <input type="text" id="apiModelInput" class="field-input" placeholder="model-id" style="direction:ltr;text-align:left;flex:1" />
+              <button id="refreshApiModels" class="btn-icon btn-icon-sm" title="بارگذاری لیست مدل‌ها از API" type="button">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
+              </button>
+            </div>
+            <div class="custom-select-wrap model-select-wrap" id="apiModelSelectWrap" style="display:none;margin-top:6px">
+              <button type="button" class="custom-select-btn" id="apiModelSelectBtn" aria-haspopup="listbox" aria-expanded="false">
+                <span id="apiModelSelectLabel">انتخاب از لیست</span>
+                <svg class="caret" viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+              </button>
+              <ul class="custom-select-list" id="apiModelSelectList" role="listbox" aria-label="مدل‌های API"></ul>
+              <select id="apiModelSelect" hidden></select>
+            </div>
+            <p class="modal-hint" style="margin:4px 0 0">شناسه مدل را دستی وارد کنید یا با دکمه تازه‌سازی از خود API بگیرید.</p>
+          </div>
+        </div>
+
+        <div class="settings-card settings-card-shared">
+          <div class="settings-card-title">پارامترهای مشترک</div>
+          <div class="settings-shared-row">
+            <span class="field-label" style="margin:0">خلاقیت (Temperature)</span>
+            <div class="setting-row-ctrl" style="max-width:280px">
+              <input type="range" id="temperature" class="temp-slider" min="0" max="1" step="0.05" value="0.3" style="--pct:30%" />
+              <span id="tempVal" class="temp-badge">0.30</span>
+            </div>
+          </div>
+          <div class="settings-shared-row">
+            <span class="field-label" style="margin:0">جستجوی وب</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="useWeb" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div id="settingsStatus" class="status-bar"></div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ═══════════════════════════════════════════
@@ -650,6 +699,36 @@
       </div>
       <div class="modal-body docs-modal-body" id="docsModalBody">
         <!-- populated by rag.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- File Viewer Modal (PDF / Word) -->
+  <div class="modal-backdrop file-viewer-backdrop" id="fileViewerBackdrop" aria-hidden="true">
+    <div class="modal file-viewer-modal" role="dialog" aria-modal="true" aria-labelledby="fileViewerTitle">
+      <div class="modal-header file-viewer-header">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div>
+          <h2 id="fileViewerTitle">مشاهده فایل</h2>
+          <p class="modal-sub" id="fileViewerSub">—</p>
+        </div>
+        <div class="file-viewer-actions">
+          <button class="btn-secondary" id="fileViewerDownload" type="button">دانلود</button>
+          <button class="modal-close" id="fileViewerClose" type="button" aria-label="بستن">
+            <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="file-viewer-body" id="fileViewerBody">
+        <div class="file-viewer-loading" id="fileViewerLoading">
+          <span class="docs-spinner"></span> در حال بارگذاری...
+        </div>
+        <embed id="fileViewerEmbed" class="file-viewer-frame" type="application/pdf" hidden />
+        <iframe id="fileViewerFrame" class="file-viewer-frame" title="پیش‌نمایش PDF" hidden></iframe>
+        <div id="fileViewerHtml" class="file-viewer-html" hidden></div>
+        <div id="fileViewerError" class="file-viewer-error" hidden></div>
       </div>
     </div>
   </div>

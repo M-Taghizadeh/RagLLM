@@ -1,8 +1,8 @@
-/* ═══════════════════════════════════════════════
-   RagBot — Light teal knowledge theme (RTL)
-   ═══════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   RagBot â€” Light teal knowledge theme (RTL)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Local Vazirmatn font-face ── */
+/* â”€â”€ Local Vazirmatn font-face â”€â”€ */
 @font-face {
   font-family: 'Vazirmatn';
   src: url('../font/Vazirmatn-Regular.woff2') format('woff2');
@@ -101,7 +101,7 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(20,33,43,.18); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(20,33,43,.28); }
 
-/* ── Sidebar ── */
+/* â”€â”€ Sidebar â”€â”€ */
 .sidebar {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
@@ -225,7 +225,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* ── Main ── */
+/* â”€â”€ Main â”€â”€ */
 .main-content {
   flex: 1;
   display: flex;
@@ -266,7 +266,7 @@ body {
   color: var(--ink);
 }
 
-/* ── Chat ── */
+/* â”€â”€ Chat â”€â”€ */
 .chat-window {
   flex: 1;
   overflow-y: auto;
@@ -344,7 +344,7 @@ body {
 .source-item strong { color: var(--teal-deep); display: block; margin-bottom: 2px; }
 
 .typing-cursor::after {
-  content: "▌";
+  content: "â–Œ";
   animation: blink 0.7s infinite;
   color: var(--teal);
 }
@@ -375,7 +375,7 @@ body {
 }
 .chat-textarea::placeholder { color: var(--ink-muted); }
 
-/* ── Panels ── */
+/* â”€â”€ Panels â”€â”€ */
 .panel {
   background: var(--surface);
   backdrop-filter: blur(12px);
@@ -458,7 +458,7 @@ textarea.field-input { resize: vertical; }
   background: var(--teal);
 }
 
-/* ── Buttons ── */
+/* â”€â”€ Buttons â”€â”€ */
 .btn-primary {
   background: linear-gradient(145deg, var(--teal), var(--teal-bright));
   color: #fff;
@@ -576,7 +576,7 @@ textarea.field-input { resize: vertical; }
 }
 .btn-stop:hover { background: var(--danger); color: #fff; }
 
-/* ── Status ── */
+/* â”€â”€ Status â”€â”€ */
 .status-bar {
   font-size: 12px;
   padding: 8px 12px;
@@ -601,7 +601,7 @@ textarea.field-input { resize: vertical; }
   white-space: nowrap;
 }
 
-/* ── Upload Panel (Toolbar style) ── */
+/* â”€â”€ Upload Panel (Toolbar style) â”€â”€ */
 .upload-panel {
   padding: 0;
   overflow: visible;
@@ -775,7 +775,7 @@ textarea.field-input { resize: vertical; }
   margin: 0 14px 10px;
 }
 
-/* ── Custom Collection Dropdown ── */
+/* â”€â”€ Custom Collection Dropdown â”€â”€ */
 .custom-select-wrap {
   position: relative;
   flex-shrink: 0;
@@ -883,7 +883,7 @@ textarea.field-input { resize: vertical; }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Model select in sidebar ── */
+/* â”€â”€ Model select in sidebar â”€â”€ */
 .model-select-wrap .custom-select-btn {
   min-width: unset;
   width: 100%;
@@ -911,7 +911,7 @@ textarea.field-input { resize: vertical; }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Sidebar settings polish ── */
+/* â”€â”€ Sidebar settings polish â”€â”€ */
 .sidebar-settings {
   padding: 12px 12px 14px;
   border-top: 1px solid var(--border);
@@ -995,7 +995,7 @@ textarea.field-input { resize: vertical; }
   min-width: 0;
 }
 
-/* model row — ctrl takes remaining space */
+/* model row â€” ctrl takes remaining space */
 .setting-row-model { overflow: visible; position: relative; }
 .setting-row-model .setting-row-ctrl { overflow: visible; }
 .setting-row-model .model-select-wrap { flex: 1; min-width: 0; overflow: visible; }
@@ -1075,7 +1075,7 @@ textarea.field-input { resize: vertical; }
 /* toggle row inherits .setting-row */
 .setting-row .toggle-switch { flex-shrink: 0; margin-right: auto; }
 
-/* ── Index Modal ── */
+/* â”€â”€ Index Modal â”€â”€ */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1250,7 +1250,7 @@ textarea.field-input { resize: vertical; }
   white-space: pre-wrap;
 }
 
-/* ── Alerts ── */
+/* â”€â”€ Alerts â”€â”€ */
 .alerts-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -1600,9 +1600,9 @@ textarea.field-input { resize: vertical; }
   .collection-name-input { width: 100px; }
 }
 
-/* ═══════════════════════════════════════════════════
-   Collection Docs Preview — eye button in dropdown
-   ═══════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Collection Docs Preview â€” eye button in dropdown
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Make dropdown items a proper flex row so the eye button sits at the end */
 .custom-select-list li {
@@ -1641,9 +1641,9 @@ textarea.field-input { resize: vertical; }
   border-color: rgba(0,160,160,.2);
 }
 
-/* ═══════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Docs Preview Modal
-   ═══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Override default max-width for a wider docs modal */
 .docs-modal {
@@ -1683,7 +1683,7 @@ textarea.field-input { resize: vertical; }
   text-overflow: ellipsis;
 }
 
-/* Modal body — scrollable list */
+/* Modal body â€” scrollable list */
 .docs-modal-body {
   padding: 16px 20px 20px;
   flex-direction: column;
@@ -1791,7 +1791,7 @@ textarea.field-input { resize: vertical; }
   font-weight: 500;
 }
 .doc-meta-item::before {
-  content: "·";
+  content: "Â·";
   margin-left: 6px;
   opacity: .5;
 }
@@ -1843,9 +1843,9 @@ textarea.field-input { resize: vertical; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ═══════════════════════════════════════════════════
-   Collection dropdown — action buttons (eye + delete)
-   ═══════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Collection dropdown â€” action buttons (eye + delete)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .col-actions {
   display: inline-flex;
@@ -1915,11 +1915,11 @@ textarea.field-input { resize: vertical; }
 .scan-url-row .field-input { flex: 1; }
 .scan-url-row .btn-primary { flex-shrink: 0; }
 
-/* ═══════════════════════════════════════════════════
-   Document Management Section — #section-docs
-   ═══════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Document Management Section â€” #section-docs
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── Toolbar (search + refresh) ── */
+/* â”€â”€ Toolbar (search + refresh) â”€â”€ */
 .docs-toolbar {
   display: flex;
   align-items: center;
@@ -1957,7 +1957,7 @@ textarea.field-input { resize: vertical; }
 }
 .docs-search-input::placeholder { color: var(--ink-muted); }
 
-/* ── Grid ── */
+/* â”€â”€ Grid â”€â”€ */
 .docs-grid-wrap {
   flex: 1;
   min-height: 0;
@@ -1972,7 +1972,7 @@ textarea.field-input { resize: vertical; }
   gap: 14px;
 }
 
-/* ── Collection Card ── */
+/* â”€â”€ Collection Card â”€â”€ */
 .docs-col-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2092,7 +2092,7 @@ textarea.field-input { resize: vertical; }
   color: var(--ink);
 }
 
-/* ── Empty + Loading ── */
+/* â”€â”€ Empty + Loading â”€â”€ */
 .docs-empty {
   display: flex;
   flex-direction: column;
@@ -2116,9 +2116,9 @@ textarea.field-input { resize: vertical; }
   font-size: 14px;
 }
 
-/* ═══════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Detail Modal (open collection)
-   ═══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .docs-detail-backdrop .modal {
   max-width: 680px;
@@ -2184,7 +2184,7 @@ textarea.field-input { resize: vertical; }
   padding: 0 12px;
 }
 
-/* Body — file list */
+/* Body â€” file list */
 .docs-detail-body {
   flex: 1;
   overflow-y: auto;
@@ -2307,9 +2307,9 @@ textarea.field-input { resize: vertical; }
   .docs-grid { grid-template-columns: 1fr; }
 }
 
-/* ═══════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    User Bar (bottom of sidebar)
-   ═══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sidebar-user-bar {
   display: flex;
   align-items: center;
@@ -2349,9 +2349,9 @@ textarea.field-input { resize: vertical; }
 }
 .user-bar-logout:hover { background: var(--danger-dim); color: var(--danger); }
 
-/* ═══════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    History Panel (slide-in)
-   ═══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .history-backdrop {
   position: fixed; inset: 0; z-index: 500;
   background: rgba(20,33,43,.40);
@@ -2503,9 +2503,9 @@ textarea.field-input { resize: vertical; }
   line-height: 1.5;
 }
 
-/* ═══════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Users Table (admin panel)
-   ═══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .users-table-wrap {
   flex: 1; overflow: auto;
 }
@@ -2540,3 +2540,202 @@ textarea.field-input { resize: vertical; }
 .user-badge.normal  { background: var(--elevated);  color: var(--ink-muted); border: 1px solid var(--border); }
 .user-badge.active  { background: var(--success-dim); color: var(--success); border: 1px solid rgba(31,138,90,.2); }
 .user-badge.inactive{ background: var(--danger-dim);  color: var(--danger);  border: 1px solid rgba(194,59,59,.2); }
+
+/* ---------------------------------------------------
+   Settings page — LLM provider
+   --------------------------------------------------- */
+.settings-page {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+  padding-bottom: 24px;
+}
+.settings-provider-tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+}
+.settings-provider-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: calc(var(--radius) - 4px);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.settings-provider-tab.active {
+  background: var(--surface-solid);
+  color: var(--teal-deep);
+  box-shadow: var(--shadow-sm);
+}
+.settings-provider-tab:hover:not(.active) {
+  color: var(--ink);
+  background: rgba(255,255,255,.45);
+}
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+}
+.settings-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.settings-model-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-model-row .custom-select-btn {
+  width: 100%;
+  justify-content: space-between;
+}
+.settings-shared-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.settings-shared-row:first-of-type { border-top: none; }
+
+#section-settings {
+  overflow: auto;
+}
+
+/* ---------------------------------------------------
+   File viewer modal (PDF / Word)
+   --------------------------------------------------- */
+.file-viewer-backdrop {
+  z-index: 600;
+  padding: 16px;
+}
+.file-viewer-modal.modal,
+.file-viewer-modal {
+  width: min(1200px, 96vw) !important;
+  max-width: min(1200px, 96vw) !important;
+  height: min(92vh, 960px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+.file-viewer-header {
+  flex-shrink: 0;
+  padding: 16px 18px;
+}
+.file-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+}
+.file-viewer-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: calc(92vh - 84px);
+  position: relative;
+  background: #e8ecee;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.file-viewer-loading,
+.file-viewer-error {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  padding: 24px;
+  text-align: center;
+  background: #f4f7f7;
+}
+.file-viewer-error {
+  color: var(--danger);
+  background: var(--surface-solid);
+}
+.file-viewer-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 60vh;
+  border: 0;
+  background: #525659;
+  display: block;
+}
+.file-viewer-html {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 60vh;
+  overflow: auto;
+  padding: 28px 32px;
+  background: #fff;
+  color: #1a1a1a;
+  line-height: 1.85;
+  font-size: 14.5px;
+  direction: auto;
+  box-sizing: border-box;
+}
+.file-viewer-html p { margin: 0 0 12px; }
+.file-viewer-html .word-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 18px;
+  font-size: 13px;
+}
+.file-viewer-html .word-preview-table td {
+  border: 1px solid #d8dee0;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+/* Active provider badge on settings page */
+.settings-active-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(15,122,117,.25);
+  background: var(--teal-soft);
+}
+.settings-active-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal-deep);
+}
+.settings-active-label strong {
+  font-weight: 800;
+}
+.settings-activate-btn {
+  flex-shrink: 0;
+}

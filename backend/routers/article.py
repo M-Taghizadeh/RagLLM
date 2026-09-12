@@ -12,14 +12,17 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from services.crawler import fetch_article
-from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
+from services.llm import (
+    get_llm_from_request,
+    assert_llm_ready,
+    DEFAULT_MODEL,
+    DEFAULT_OLLAMA_URL,
+    DEFAULT_API_BASE_URL,
+)
 from services.web_search import search_text_only
 from services.rag_chain import get_session_history, clear_session
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_community.chat_message_histories import ChatMessageHistory
 
 router = APIRouter()
 
@@ -36,12 +39,15 @@ class FetchRequest(BaseModel):
 
 
 class ArticleChatRequest(BaseModel):
-    message:     str
-    session_id:  str
-    model:       str   = DEFAULT_MODEL
-    ollama_url:  str   = DEFAULT_OLLAMA_URL
-    temperature: float = Field(0.3, ge=0.0, le=1.0)
-    use_web:     bool  = False
+    message:      str
+    session_id:   str
+    model:        str   = DEFAULT_MODEL
+    ollama_url:   str   = DEFAULT_OLLAMA_URL
+    temperature:  float = Field(0.3, ge=0.0, le=1.0)
+    use_web:      bool  = False
+    provider:     str   = "ollama"
+    api_base_url: str   = DEFAULT_API_BASE_URL
+    api_token:    str   = ""
 
 
 # ------------------------------------------------------------------ #
@@ -82,17 +88,18 @@ async def article_chat_stream(req: ArticleChatRequest):
             status_code=404,
             detail="Session not found. Please fetch a URL first via POST /api/article/fetch"
         )
-    if not check_ollama(req.ollama_url):
-        raise HTTPException(
-            status_code=503,
-            detail=f"Ollama در دسترس نیست ({req.ollama_url}). لطفاً 'ollama serve' را اجرا کنید."
-        )
+    assert_llm_ready(
+        provider=req.provider,
+        ollama_url=req.ollama_url,
+        api_base_url=req.api_base_url,
+        api_token=req.api_token,
+    )
 
     article = _article_store[req.session_id]
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
-            llm = get_llm(req.ollama_url, req.model, req.temperature)
+            llm = get_llm_from_request(req)
             history = get_session_history(req.session_id)
 
             user_input = req.message

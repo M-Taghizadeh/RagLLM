@@ -426,7 +426,7 @@
               ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
             </div>
           </div>
-          <button type="button" class="btn-secondary doc-open-btn" title="باز کردن فایل">باز کردن</button>
+          <button type="button" class="btn-secondary doc-open-btn" title="مشاهده فایل در سامانه">مشاهده</button>
         </div>
         ${preview}`;
 
@@ -626,7 +626,7 @@
     input$.value = "";
     input$.style.height = "auto";
 
-    const { ollamaUrl, model, temperature, useWeb } = getSettings();
+    const settings = getSettings();
     const { wrap, bubble } = appendMessage("assistant", "");
     bubble.classList.add("typing-cursor");
     isStreaming = true;
@@ -642,7 +642,7 @@
       headers: _authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         message: text, collection, session_id: sessionId,
-        model, ollama_url: ollamaUrl, temperature, use_web: useWeb,
+        ...llmRequestFields(settings),
       }),
       signal: chatAbort.signal,
     })

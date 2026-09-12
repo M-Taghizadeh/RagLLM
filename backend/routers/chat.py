@@ -12,13 +12,19 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from services.llm import get_llm, list_ollama_models, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
+from services.llm import (
+    get_llm_from_request,
+    list_ollama_models,
+    list_api_models,
+    assert_llm_ready,
+    DEFAULT_MODEL,
+    DEFAULT_OLLAMA_URL,
+    DEFAULT_API_BASE_URL,
+)
 from services.web_search import search
 from services.rag_chain import get_session_history, clear_session
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables.history import RunnableWithMessageHistory
 
 router = APIRouter()
 
@@ -28,17 +34,23 @@ router = APIRouter()
 # ------------------------------------------------------------------ #
 
 class ChatRequest(BaseModel):
-    message:     str
-    session_id:  str  = "default"
-    model:       str  = DEFAULT_MODEL
-    ollama_url:  str  = DEFAULT_OLLAMA_URL
-    temperature: float = Field(0.3, ge=0.0, le=1.0)
-    use_web:     bool = False
-    web_results: int  = Field(6, ge=1, le=20)
+    message:      str
+    session_id:   str  = "default"
+    model:        str  = DEFAULT_MODEL
+    ollama_url:   str  = DEFAULT_OLLAMA_URL
+    temperature:  float = Field(0.3, ge=0.0, le=1.0)
+    use_web:      bool = False
+    web_results:  int  = Field(6, ge=1, le=20)
+    provider:     str  = "ollama"
+    api_base_url: str  = DEFAULT_API_BASE_URL
+    api_token:    str  = ""
 
 
 class ModelsRequest(BaseModel):
-    ollama_url: str = DEFAULT_OLLAMA_URL
+    provider:     str = "ollama"
+    ollama_url:   str = DEFAULT_OLLAMA_URL
+    api_base_url: str = DEFAULT_API_BASE_URL
+    api_token:    str = ""
 
 
 # ------------------------------------------------------------------ #
@@ -47,9 +59,17 @@ class ModelsRequest(BaseModel):
 
 @router.post("/models")
 def get_models(req: ModelsRequest):
-    """Return list of installed Ollama models."""
+    """Return models for the selected provider."""
+    provider = (req.provider or "ollama").strip().lower()
+    if provider in ("api", "openai", "openai_compatible", "remote"):
+        models = list_api_models(req.api_base_url, req.api_token)
+        return {
+            "provider": "api",
+            "models": [m["id"] for m in models],
+            "model_items": models,
+        }
     models = list_ollama_models(req.ollama_url)
-    return {"models": models}
+    return {"provider": "ollama", "models": models, "model_items": [{"id": m, "label": m} for m in models]}
 
 
 @router.post("/clear")
@@ -60,21 +80,21 @@ def clear_chat(session_id: str = "default"):
 
 @router.post("/stream")
 async def chat_stream(req: ChatRequest):
-    # Check Ollama before opening SSE stream
-    if not check_ollama(req.ollama_url):
-        raise HTTPException(
-            status_code=503,
-            detail=f"Ollama در دسترس نیست ({req.ollama_url}). لطفاً 'ollama serve' را اجرا کنید."
-        )
     """
     SSE endpoint - streams LLM tokens as they arrive.
     Event format:  data: {"token": "..."}\n\n
     Final event:   data: {"done": true}\n\n
     """
+    assert_llm_ready(
+        provider=req.provider,
+        ollama_url=req.ollama_url,
+        api_base_url=req.api_base_url,
+        api_token=req.api_token,
+    )
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
-            llm = get_llm(req.ollama_url, req.model, req.temperature)
+            llm = get_llm_from_request(req)
             history = get_session_history(req.session_id)
 
             user_input = req.message

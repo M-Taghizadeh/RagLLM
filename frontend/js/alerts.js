@@ -249,7 +249,7 @@
     const checkedIds = [...scanCheckboxes$.querySelectorAll("input:checked")].map(i => parseInt(i.value));
     if (!checkedIds.length) { setStatus(scanStatus$, "حداقل یک قانون انتخاب کنید.", "warn"); return; }
 
-    const { ollamaUrl, model } = getSettings();
+    const settings = getSettings();
     setStatus(scanStatus$, "در حال اتصال...", "info");
     scanBtn$.disabled = true;
     scanResults$.innerHTML = "";
@@ -260,7 +260,11 @@
     fetch(`${API_BASE}/alerts/scan/stream`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, rule_ids: checkedIds, model, ollama_url: ollamaUrl }),
+      body: JSON.stringify({
+        url,
+        rule_ids: checkedIds,
+        ...llmRequestFields(settings),
+      }),
     })
     .then(res => {
       if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });

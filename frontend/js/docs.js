@@ -354,9 +354,9 @@
             ${metaParts.map(p => `<span class="doc-meta-item">${p}</span>`).join("")}
           </div>
         </div>
-        <button class="docs-detail-open-file-btn btn-secondary" data-filename="${escHtml(doc.filename)}" title="باز کردن فایل" type="button">
+        <button class="docs-detail-open-file-btn btn-secondary" data-filename="${escHtml(doc.filename)}" title="مشاهده فایل در سامانه" type="button">
           <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4H4v12h12v-4"/><path d="M10 10l6-6M12 4h4v4"/></svg>
-          باز کردن
+          مشاهده
         </button>
         <button class="docs-detail-delete-file-btn btn-danger" data-filename="${escHtml(doc.filename)}" title="حذف این فایل" type="button">
           <svg viewBox="0 0 20 20" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l.867 9.143A1 1 0 006.862 15h6.276a1 1 0 00.995-.857L15 5"/><path d="M3 5h14M8 5V3h4v2"/></svg>
@@ -364,7 +364,7 @@
         </button>`;
 
       row.classList.add("docs-detail-file-row-clickable");
-      row.title = "کلیک برای باز کردن";
+      row.title = "کلیک برای مشاهده";
       row.addEventListener("click", async () => {
         try {
           await apiOpenFile(

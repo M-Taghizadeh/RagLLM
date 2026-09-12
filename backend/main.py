@@ -13,7 +13,12 @@ from fastapi.staticfiles import StaticFiles
 
 from routers import chat, rag, article, alerts
 from routers import auth as auth_router
-from services.llm import DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K
+from services.llm import (
+    DEFAULT_MODEL,
+    DEFAULT_OLLAMA_URL,
+    DEFAULT_API_BASE_URL,
+    DEFAULT_TOP_K,
+)
 
 # ── Fix: increase multipart part size to 500 MB for PDF uploads ──────────────
 from starlette.formparsers import MultiPartParser
@@ -74,9 +79,11 @@ def health():
 @app.get("/api/config")
 def get_config():
     return {
-        "default_model":  DEFAULT_MODEL,
-        "ollama_url":     DEFAULT_OLLAMA_URL,
-        "default_top_k":  DEFAULT_TOP_K,
+        "default_model":   DEFAULT_MODEL,
+        "ollama_url":      DEFAULT_OLLAMA_URL,
+        "default_top_k":   DEFAULT_TOP_K,
+        "api_base_url":    DEFAULT_API_BASE_URL or "",
+        "api_models":      [],
     }
 
 

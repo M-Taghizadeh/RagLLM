@@ -15,7 +15,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from services.crawler import fetch_article, fetch_rss, is_rss_url
-from services.llm import get_llm, check_ollama, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
+from services.llm import (
+    get_llm_from_request,
+    assert_llm_ready,
+    DEFAULT_MODEL,
+    DEFAULT_OLLAMA_URL,
+    DEFAULT_API_BASE_URL,
+)
 
 router = APIRouter()
 
@@ -48,6 +54,9 @@ class ScanRequest(BaseModel):
     model:         str = DEFAULT_MODEL
     ollama_url:    str = DEFAULT_OLLAMA_URL
     max_rss_items: int = 20
+    provider:      str = "ollama"
+    api_base_url:  str = DEFAULT_API_BASE_URL
+    api_token:     str = ""
 
 
 # ------------------------------------------------------------------ #
@@ -170,12 +179,13 @@ def _parse_llm_response(text: str) -> dict:
 async def scan_url(req: ScanRequest):
     """Scan a URL or RSS feed against alert rules using LLM."""
 
-    # ── 1. Check Ollama first ──────────────────────────────────────
-    if not check_ollama(req.ollama_url):
-        raise HTTPException(
-            status_code=503,
-            detail=f"Ollama در دسترس نیست ({req.ollama_url}). لطفاً 'ollama serve' را اجرا کنید."
-        )
+    # ── 1. Check LLM provider ──────────────────────────────────────
+    assert_llm_ready(
+        provider=req.provider,
+        ollama_url=req.ollama_url,
+        api_base_url=req.api_base_url,
+        api_token=req.api_token,
+    )
 
     # ── 2. Load rules ──────────────────────────────────────────────
     conn = get_db()
@@ -220,7 +230,7 @@ async def scan_url(req: ScanRequest):
         raise HTTPException(status_code=400, detail="محتوایی برای اسکن یافت نشد.")
 
     # ── 4. Run LLM matching ────────────────────────────────────────
-    llm = get_llm(req.ollama_url, req.model, 0.0)
+    llm = get_llm_from_request(req, temperature=0.0)
     alerts_found = []
     conn = get_db()
 
@@ -237,7 +247,7 @@ async def scan_url(req: ScanRequest):
                 conn.close()
                 raise HTTPException(
                     status_code=503,
-                    detail=f"خطا در ارتباط با Ollama: {e}"
+                    detail=f"خطا در ارتباط با مدل زبانی: {e}"
                 )
 
             if parsed["matched"]:
@@ -278,11 +288,12 @@ def _sse(data: dict) -> str:
 async def scan_url_stream(req: ScanRequest):
     """Same as /scan but streams SSE events per article."""
 
-    if not check_ollama(req.ollama_url):
-        raise HTTPException(
-            status_code=503,
-            detail=f"Ollama در دسترس نیست ({req.ollama_url}). لطفاً 'ollama serve' را اجرا کنید."
-        )
+    assert_llm_ready(
+        provider=req.provider,
+        ollama_url=req.ollama_url,
+        api_base_url=req.api_base_url,
+        api_token=req.api_token,
+    )
 
     conn = get_db()
     if req.rule_ids:
@@ -338,7 +349,7 @@ async def scan_url_stream(req: ScanRequest):
             return
 
         # ── LLM matching ───────────────────────────────────────────
-        llm = get_llm(req.ollama_url, req.model, 0.0)
+        llm = get_llm_from_request(req, temperature=0.0)
         rules_list = [dict(r) for r in rules]
         total_articles = len(articles)
         alerts_found = 0

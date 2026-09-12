@@ -1,10 +1,11 @@
-﻿"""
+"""
 Router: /api/rag
 PDF & Word indexing with SSE progress + cancel support, hybrid RAG chat.
 All endpoints require a valid JWT - user scope enforced for collections.
 """
 
 import ast as _ast
+import html as _html
 import json
 import os
 import asyncio
@@ -44,8 +45,9 @@ from services.vectorstore import (
 )
 from services.retrieval import HybridRetriever
 from services.llm import (
-    get_llm, check_ollama,
-    DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_TOP_K,
+    get_llm_from_request,
+    assert_llm_ready,
+    DEFAULT_MODEL, DEFAULT_OLLAMA_URL, DEFAULT_API_BASE_URL, DEFAULT_TOP_K,
     DENSE_WEIGHT, SPARSE_WEIGHT,
 )
 from services.rag_chain import rag_stream, clear_session, hydrate_session
@@ -67,14 +69,17 @@ _MIME_BY_EXT = {
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
 class RagChatRequest(BaseModel):
-    message:     str
-    collection:  str   = "default_pdf"
-    session_id:  str   = "rag_default"
-    model:       str   = DEFAULT_MODEL
-    ollama_url:  str   = DEFAULT_OLLAMA_URL
-    temperature: float = Field(0.3, ge=0.0, le=1.0)
-    top_k:       int   = Field(default_factory=lambda: DEFAULT_TOP_K, ge=1, le=50)
-    use_web:     bool  = False
+    message:      str
+    collection:   str   = "default_pdf"
+    session_id:   str   = "rag_default"
+    model:        str   = DEFAULT_MODEL
+    ollama_url:   str   = DEFAULT_OLLAMA_URL
+    temperature:  float = Field(0.3, ge=0.0, le=1.0)
+    top_k:        int   = Field(default_factory=lambda: DEFAULT_TOP_K, ge=1, le=50)
+    use_web:      bool  = False
+    provider:     str   = "ollama"
+    api_base_url: str   = DEFAULT_API_BASE_URL
+    api_token:    str   = ""
 
 
 class RenameCollectionRequest(BaseModel):
@@ -256,6 +261,78 @@ async def download_file(
         filename=filename,
         content_disposition_type="inline" if inline else "attachment",
     )
+
+
+def _word_file_to_html(path: str) -> str:
+    """Convert Word document to simple readable HTML for in-app preview."""
+    lower = path.lower()
+    parts: list[str] = []
+
+    if lower.endswith(".docx"):
+        try:
+            from docx import Document
+            doc = Document(path)
+            for p in doc.paragraphs:
+                text = (p.text or "").strip()
+                if text:
+                    parts.append(f"<p>{_html.escape(text)}</p>")
+            for table in doc.tables:
+                rows_html = []
+                for row in table.rows:
+                    cells = "".join(
+                        f"<td>{_html.escape((c.text or '').strip())}</td>"
+                        for c in row.cells
+                    )
+                    rows_html.append(f"<tr>{cells}</tr>")
+                if rows_html:
+                    parts.append(
+                        "<table class='word-preview-table'>"
+                        + "".join(rows_html)
+                        + "</table>"
+                    )
+        except Exception:
+            parts = []
+
+    if not parts:
+        try:
+            import docx2txt
+            text = docx2txt.process(path) or ""
+            for line in text.splitlines():
+                line = line.strip()
+                if line:
+                    parts.append(f"<p>{_html.escape(line)}</p>")
+        except Exception as e:
+            raise HTTPException(500, detail=f"خطا در خواندن فایل Word: {e}")
+
+    return "".join(parts) or "<p>(محتوایی برای نمایش یافت نشد)</p>"
+
+
+@router.get("/collections/{collection}/files/{filename:path}/preview")
+async def preview_file(
+    collection: str,
+    filename: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    In-app preview metadata.
+    PDF: client fetches download blob into an iframe.
+    Word: returns HTML rendered from document text.
+    """
+    safe_col = sanitize_collection_name(collection)
+    await _get_collection_row(db, current_user.id, safe_col)
+    path = get_uploaded_file_path(current_user.id, safe_col, filename)
+    if not path:
+        raise HTTPException(404, detail="Original file not found.")
+
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".pdf":
+        return {"type": "pdf", "filename": filename}
+    if ext in (".doc", ".docx"):
+        html_body = await asyncio.to_thread(_word_file_to_html, path)
+        return {"type": "word", "filename": filename, "html": html_body}
+
+    raise HTTPException(400, detail="پیش‌نمایش این نوع فایل پشتیبانی نمی‌شود.")
 
 
 # ── Multipart helper ──────────────────────────────────────────────────────────
@@ -535,8 +612,12 @@ async def rag_chat_stream(
 
     if not collection_exists(safe_col, user_id=current_user.id):
         raise HTTPException(404, detail=f"Collection '{req.collection}' not indexed yet.")
-    if not check_ollama(req.ollama_url):
-        raise HTTPException(503, detail="Ollama is not available.")
+    assert_llm_ready(
+        provider=req.provider,
+        ollama_url=req.ollama_url,
+        api_base_url=req.api_base_url,
+        api_token=req.api_token,
+    )
 
     user_id = current_user.id
     col_id = col_row.id
@@ -554,7 +635,7 @@ async def rag_chat_stream(
                 dense_weight=DENSE_WEIGHT,
                 sparse_weight=SPARSE_WEIGHT,
             )
-            llm = get_llm(req.ollama_url, req.model, req.temperature)
+            llm = get_llm_from_request(req)
             user_input = req.message
             web_results: list = []
 

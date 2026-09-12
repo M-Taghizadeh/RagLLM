@@ -64,7 +64,7 @@
     input$.value = "";
     input$.style.height = "auto";
 
-    const { ollamaUrl, model, temperature, useWeb } = getSettings();
+    const settings = getSettings();
     const { wrap, bubble } = appendMessage("assistant", "");
     bubble.classList.add("typing-cursor");
 
@@ -80,7 +80,7 @@
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
         message: text, session_id: sessionId,
-        model, ollama_url: ollamaUrl, temperature, use_web: useWeb,
+        ...llmRequestFields(settings),
       }),
       signal: abortCtrl.signal,
     })
