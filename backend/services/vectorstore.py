@@ -228,12 +228,29 @@ def _load_file(
             p.metadata["source_file"] = fname
         return splitter.split_documents(pages)
     elif ext in (".docx", ".doc"):
-        loader = Docx2txtLoader(path)
-        pages  = loader.load()
+        # Docx2txtLoader only handles .docx reliably; try it first, then
+        # fall back to python-docx for .docx and raise a clear error for
+        # binary .doc files that can't be parsed.
+        try:
+            loader = Docx2txtLoader(path)
+            pages  = loader.load()
+        except Exception as docx_err:
+            if ext == ".doc":
+                raise ValueError(
+                    f"فایل '{fname}' از نوع .doc (Word قدیمی) است و قابل خواندن نیست. "
+                    "لطفاً آن را به فرمت .docx تبدیل کرده و مجدداً آپلود کنید."
+                ) from docx_err
+            raise
         for p in pages:
             p.metadata["source_file"] = fname
             p.metadata["page"] = ""
-        return splitter.split_documents(pages)
+        chunks = splitter.split_documents(pages)
+        if not chunks:
+            raise ValueError(
+                f"فایل '{fname}' هیچ متنی قابل استخراج ندارد. "
+                "ممکن است فایل محافظت‌شده یا خراب باشد."
+            )
+        return chunks
     return []
 
 
@@ -347,6 +364,10 @@ def build_vectorstore_from_pdfs(
             all_docs.extend(_load_file(path, fname, splitter))
         except Exception as ex:
             print(f"[vectorstore] Error loading {path}: {ex}")
+            cb(5 + int(25 * i / max(len(pdf_paths), 1)), f"⚠️ خطا در خواندن '{fname}': {ex}")
+            if len(pdf_paths) == 1:
+                # تنها فایل آپلود شده — خطا رو کامل برگردون
+                raise
 
     if not all_docs:
         raise ValueError("هیچ متنی از فایل‌های ارسال‌شده استخراج نشد.")
@@ -400,6 +421,9 @@ def add_files_to_collection(
             new_docs.extend(_load_file(path, fname, splitter))
         except Exception as ex:
             print(f"[vectorstore] Error loading {path}: {ex}")
+            cb(5 + int(20 * i / max(len(pdf_paths), 1)), f"⚠️ خطا در خواندن '{fname}': {ex}")
+            if len(pdf_paths) == 1:
+                raise
 
     if not new_docs:
         raise ValueError("هیچ متنی از فایل‌های ارسال‌شده استخراج نشد.")

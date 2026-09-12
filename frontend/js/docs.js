@@ -590,7 +590,11 @@
     })
     .then(res => {
       if (res.status === 401) { _handle401(); return; }
-      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
+      if (!res.ok) return res.text().then(t => {
+        let msg = res.statusText;
+        try { const j = JSON.parse(t); msg = j.detail || msg; } catch {}
+        throw new Error(msg);
+      });
 
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
@@ -672,7 +676,11 @@
     })
     .then(res => {
       if (res.status === 401) { _handle401(); return; }
-      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
+      if (!res.ok) return res.text().then(t => {
+        let msg = res.statusText;
+        try { const j = JSON.parse(t); msg = j.detail || msg; } catch {}
+        throw new Error(msg);
+      });
 
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
