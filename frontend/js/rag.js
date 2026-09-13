@@ -590,7 +590,11 @@
     wrap.className = `chat-message ${role}`;
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble";
-    bubble.textContent = text;
+    if (role === "user") {
+      bubble.textContent = text;
+    } else {
+      bubble.innerHTML = text ? renderMarkdown(text) : "";
+    }
     const meta = document.createElement("div");
     meta.className = "chat-meta";
     meta.textContent = role === "user" ? "شما" : "چت بات (RAG)";
@@ -639,6 +643,7 @@
     chatAbort = new AbortController();
     let sourcesData  = null;
     let statusBubble = null;
+    let rawText = "";
 
     fetch(`${API_BASE}/rag/chat/stream`, {
       method:  "POST",
@@ -667,12 +672,12 @@
             if (!line.startsWith("data:")) continue;
             try {
               const p = JSON.parse(line.slice(5).trim());
-              if (p.error)   { bubble.textContent = `⚠️ ${p.error}`; bubble.style.color = "var(--danger)"; finalize(); return; }
+              if (p.error)   { bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(p.error)}</span>`; finalize(); return; }
               if (p.status === "retrieving")     { statusBubble = createStatusBubble(chatWindow$, p.msg); }
               if (p.status === "retrieval_done") { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
               if (p.status === "searching")      { statusBubble = createStatusBubble(chatWindow$, p.msg); }
               if (p.status === "search_done")    { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
-              if (p.token)   { bubble.textContent += p.token; chatWindow$.scrollTop = chatWindow$.scrollHeight; }
+              if (p.token)   { rawText += p.token; bubble.innerHTML = renderMarkdown(rawText); chatWindow$.scrollTop = chatWindow$.scrollHeight; }
               if (p.sources)     { sourcesData = p.sources; }
               if (p.web_sources) { appendWebSources(wrap, p.web_sources); }
               if (p.sources || p.done) { finalize(); return; }
@@ -680,7 +685,7 @@
           }
           read();
         }).catch(err => {
-          if (err.name !== "AbortError") { bubble.textContent += " [توقف]"; }
+          if (err.name !== "AbortError") { bubble.innerHTML = renderMarkdown(rawText) + `<span style="color:var(--danger)"> [توقف]</span>`; }
           finalize();
         });
       }
@@ -688,8 +693,7 @@
     })
     .catch(err => {
       if (err.name !== "AbortError") {
-        bubble.textContent = `⚠️ ${err.message}`;
-        bubble.style.color = "var(--danger)";
+        bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(err.message)}</span>`;
       }
       finalize();
     });

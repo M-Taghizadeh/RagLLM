@@ -733,6 +733,14 @@
     </div>
   </div>
 
+  <script src="js/marked.min.js"></script>
+  <script>
+    // تنظیم marked برای رندر امن
+    marked.setOptions({ breaks: true, gfm: true });
+    function renderMarkdown(text) {
+      return marked.parse(text || "");
+    }
+  </script>
   <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/chat.js"></script>

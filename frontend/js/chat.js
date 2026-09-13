@@ -43,7 +43,11 @@
     wrap.className = `chat-message ${role}`;
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble";
-    bubble.textContent = text;
+    if (role === "user") {
+      bubble.textContent = text;
+    } else {
+      bubble.innerHTML = text ? renderMarkdown(text) : "";
+    }
     const meta = document.createElement("div");
     meta.className = "chat-meta";
     meta.textContent = role === "user" ? "شما" : "چت بات";
@@ -74,6 +78,7 @@
 
     abortCtrl = new AbortController();
     let statusBubble = null;
+    let rawText = "";
 
     fetch(`${API_BASE}/chat/stream`, {
       method:  "POST",
@@ -100,10 +105,10 @@
             if (!line.startsWith("data:")) continue;
             try {
               const p = JSON.parse(line.slice(5).trim());
-              if (p.error)       { bubble.textContent = `⚠️ ${p.error}`; bubble.style.color = "var(--danger)"; finalize(); return; }
+              if (p.error)       { bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(p.error)}</span>`; finalize(); return; }
               if (p.status === "searching")  { statusBubble = createStatusBubble(window$, p.msg); }
               if (p.status === "search_done"){ updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
-              if (p.token)       { bubble.textContent += p.token; window$.scrollTop = window$.scrollHeight; }
+              if (p.token)       { rawText += p.token; bubble.innerHTML = renderMarkdown(rawText); window$.scrollTop = window$.scrollHeight; }
               if (p.web_sources) { appendWebSources(wrap, p.web_sources); }
               if (p.done)        { finalize(); return; }
             } catch {}
@@ -111,8 +116,7 @@
           read();
         }).catch(err => {
           if (err.name !== "AbortError") {
-            bubble.textContent = `⚠️ ${err.message}`;
-            bubble.style.color = "var(--danger)";
+            bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(err.message)}</span>`;
           }
           finalize();
         });
@@ -121,8 +125,7 @@
     })
     .catch(err => {
       if (err.name !== "AbortError") {
-        bubble.textContent = `⚠️ ${err.message}`;
-        bubble.style.color = "var(--danger)";
+        bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(err.message)}</span>`;
       }
       finalize();
     });
