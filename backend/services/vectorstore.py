@@ -22,6 +22,10 @@ import threading
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
+# تضمین حالت آفلاین در تمام زیرماژول‌های ترنسفورمرز
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
 import numpy as np
 import faiss as faiss_lib
 from langchain_core.documents import Document
@@ -145,7 +149,6 @@ def delete_collection(collection: str, user_id: Optional[int] = None) -> None:
     p = _store_path(collection, user_id)
     if os.path.isdir(p):
         shutil.rmtree(p)
-    # Also remove uploaded files for this collection
     if user_id is not None:
         up_dir = os.path.join(UPLOADS_BASE_DIR, str(user_id), sanitize_collection_name(collection))
         if os.path.isdir(up_dir):
@@ -196,13 +199,22 @@ def load_vectorstore(
 ) -> Optional[FAISS]:
     col = sanitize_collection_name(collection)
     if not collection_exists(col, user_id):
+        print(f"--> [VECTORSTORE] Collection '{col}' does not exist on disk.", flush=True)
         return None
+    
+    print(f"--> [VECTORSTORE] Getting BGEEmbeddings instance...", flush=True)
     embeddings = BGEEmbeddings.get_instance()
-    return FAISS.load_local(
-        folder_path=_store_path(col, user_id),
+    
+    store_dir = _store_path(col, user_id)
+    print(f"--> [VECTORSTORE] Executing FAISS.load_local from {store_dir}...", flush=True)
+    
+    vs = FAISS.load_local(
+        folder_path=store_dir,
         embeddings=embeddings,
         allow_dangerous_deserialization=True,
     )
+    print("--> [VECTORSTORE] FAISS.load_local finished successfully!", flush=True)
+    return vs
 
 
 # ── File splitter ─────────────────────────────────────────────────────────────
@@ -228,9 +240,6 @@ def _load_file(
             p.metadata["source_file"] = fname
         return splitter.split_documents(pages)
     elif ext in (".docx", ".doc"):
-        # Docx2txtLoader only handles .docx reliably; try it first, then
-        # fall back to python-docx for .docx and raise a clear error for
-        # binary .doc files that can't be parsed.
         try:
             loader = Docx2txtLoader(path)
             pages  = loader.load()
@@ -262,10 +271,6 @@ def store_uploaded_file(
     user_id: int,
     folder_id: str,
 ) -> str:
-    """
-    Copy *src_path* into the permanent uploads directory.
-    Returns the destination path.
-    """
     dest_dir  = _uploads_dir(user_id, folder_id)
     dest_path = os.path.join(dest_dir, filename)
     shutil.copy2(src_path, dest_path)
@@ -273,7 +278,6 @@ def store_uploaded_file(
 
 
 def list_uploaded_files(user_id: int, folder_id: str) -> List[str]:
-    """Return filenames stored in the uploads directory for a collection."""
     up_dir = os.path.join(UPLOADS_BASE_DIR, str(user_id), folder_id)
     if not os.path.isdir(up_dir):
         return []
@@ -284,7 +288,6 @@ def list_uploaded_files(user_id: int, folder_id: str) -> List[str]:
 
 
 def get_uploaded_file_path(user_id: int, folder_id: str, filename: str) -> Optional[str]:
-    """Return absolute path if the file exists, else None."""
     path = os.path.join(UPLOADS_BASE_DIR, str(user_id), folder_id, filename)
     return path if os.path.isfile(path) else None
 
@@ -298,7 +301,6 @@ def _embed_and_build(
     cb: Callable,
     cancelled: Callable,
 ) -> FAISS:
-    """Embed all_docs and return a FAISS vectorstore."""
     embeddings = BGEEmbeddings.get_instance()
     BATCH  = 32
     texts  = [d.page_content for d in all_docs]
@@ -341,7 +343,6 @@ def build_vectorstore_from_pdfs(
     cancel_event:      CancelEvent = None,
     user_id: Optional[int] = None,
 ) -> Tuple[FAISS, int]:
-    """Build a fresh FAISS index (overwrites existing collection)."""
     display_name = display_name or collection
     col = sanitize_collection_name(collection)
 
@@ -363,10 +364,9 @@ def build_vectorstore_from_pdfs(
         try:
             all_docs.extend(_load_file(path, fname, splitter))
         except Exception as ex:
-            print(f"[vectorstore] Error loading {path}: {ex}")
+            print(f"[vectorstore] Error loading {path}: {ex}", flush=True)
             cb(5 + int(25 * i / max(len(pdf_paths), 1)), f"⚠️ خطا در خواندن '{fname}': {ex}")
             if len(pdf_paths) == 1:
-                # تنها فایل آپلود شده — خطا رو کامل برگردون
                 raise
 
     if not all_docs:
@@ -399,7 +399,6 @@ def add_files_to_collection(
     cancel_event:      CancelEvent = None,
     user_id: Optional[int] = None,
 ) -> Tuple[FAISS, int]:
-    """Append new files to an existing collection (or create it if absent)."""
     col = sanitize_collection_name(collection)
 
     def cb(pct: int, detail: str):
@@ -420,7 +419,7 @@ def add_files_to_collection(
         try:
             new_docs.extend(_load_file(path, fname, splitter))
         except Exception as ex:
-            print(f"[vectorstore] Error loading {path}: {ex}")
+            print(f"[vectorstore] Error loading {path}: {ex}", flush=True)
             cb(5 + int(20 * i / max(len(pdf_paths), 1)), f"⚠️ خطا در خواندن '{fname}': {ex}")
             if len(pdf_paths) == 1:
                 raise
@@ -457,7 +456,6 @@ def delete_file_from_collection(
     filename:   str,
     user_id: Optional[int] = None,
 ) -> int:
-    """Remove all chunks of *filename*, rebuild index. Returns remaining chunk count."""
     col = sanitize_collection_name(collection)
     if not collection_exists(col, user_id):
         raise FileNotFoundError(f"مجموعه '{collection}' پیدا نشد.")
@@ -472,7 +470,6 @@ def delete_file_from_collection(
 
     if not remaining:
         delete_collection(col, user_id)
-        # Remove from uploads too
         if user_id is not None:
             fp = os.path.join(UPLOADS_BASE_DIR, str(user_id), col, filename)
             if os.path.isfile(fp):
@@ -491,7 +488,6 @@ def delete_file_from_collection(
     meta = load_collection_meta(col, user_id)
     save_collection_meta(col, meta.get("display_name") or col, user_id)
 
-    # Remove from uploads
     if user_id is not None:
         fp = os.path.join(UPLOADS_BASE_DIR, str(user_id), col, filename)
         if os.path.isfile(fp):

@@ -29,3 +29,5 @@ faiss_db_cli/
 # Keep nginx.conf in repo; ignore only local TLS keys/certs
 nginx/certs/*.pem
 data/
+
+bge-reranker-v2-m3/

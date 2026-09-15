@@ -70,6 +70,8 @@
 
 >> docker compose up -d --build
 
+>> docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+
 >> open https://localhost:7443
 
 
@@ -84,4 +86,5 @@ Notes:
 
 - See DOCKER.md for GPU / Ollama profile details.
 
-
+# Tips: if you have delay fo loading weight of rerank model to you gpu: you should install this libs:
+# docker exec -u 0 -it ragbot-app pip install sentencepiece protobuf

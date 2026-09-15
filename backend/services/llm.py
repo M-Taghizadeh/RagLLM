@@ -24,7 +24,13 @@ if _env_path.exists():
 
 DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL      = os.environ.get("DEFAULT_MODEL", "qwen2.5:14b")
-DEFAULT_TOP_K      = int(os.environ.get("DEFAULT_TOP_K", "8"))
+# NOTE: renamed from DEFAULT_TOP_K -> RAG_TOP_K. "top_k" is also a common
+# Ollama/LLM *sampling* parameter name; if your .env has DEFAULT_TOP_K=50
+# left over from an Ollama template, it was accidentally being consumed
+# here as "how many chunks to stuff into the RAG context" — not as an LLM
+# sampling setting. 50 chunks per answer is too much noise for the model.
+# Set RAG_TOP_K explicitly (6-10 is a good default with a reranker).
+DEFAULT_TOP_K      = int(os.environ.get("RAG_TOP_K", "8"))
 DENSE_WEIGHT       = float(os.environ.get("DENSE_WEIGHT", "0.7"))
 SPARSE_WEIGHT      = float(os.environ.get("SPARSE_WEIGHT", "0.3"))
 DEFAULT_NUM_CTX    = int(os.environ.get("NUM_CTX", "8192"))

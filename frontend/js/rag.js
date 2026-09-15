@@ -609,7 +609,7 @@
     if (!sources || !sources.length) return;
     const acc    = document.createElement("div");   acc.className = "sources-accordion";
     const toggle = document.createElement("button"); toggle.className = "sources-toggle";
-    toggle.textContent = `📚 ${sources.length} منبع بازیابی‌شده`;
+    toggle.textContent = `🕮 ${sources.length} منبع بازیابی‌شده`;
     const body   = document.createElement("div");   body.className = "sources-body";
 
     sources.forEach((s, i) => {

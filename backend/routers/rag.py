@@ -44,6 +44,7 @@ from services.vectorstore import (
     DEFAULT_CHUNK_OVERLAP,
 )
 from services.retrieval import HybridRetriever
+from services.reranker import get_reranker_safe, RERANK_CANDIDATES
 from services.llm import (
     get_llm_from_request,
     assert_llm_ready,
@@ -607,17 +608,23 @@ async def rag_chat_stream(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    print("--> [CHECKPOINT 1] Request received in router", flush=True)
     safe_col = sanitize_collection_name(req.collection)
     col_row = await _get_collection_row(db, current_user.id, safe_col)
+    print("--> [CHECKPOINT 2] Collection row loaded from DB", flush=True)
 
     if not collection_exists(safe_col, user_id=current_user.id):
+        print("--> [CHECKPOINT 3] Collection not found", flush=True)
         raise HTTPException(404, detail=f"Collection '{req.collection}' not indexed yet.")
+    
+    print("--> [CHECKPOINT 4] Checking LLM readiness...", flush=True)
     assert_llm_ready(
         provider=req.provider,
         ollama_url=req.ollama_url,
         api_base_url=req.api_base_url,
         api_token=req.api_token,
     )
+    print("--> [CHECKPOINT 5] LLM is Ready!", flush=True)
 
     user_id = current_user.id
     col_id = col_row.id
@@ -625,24 +632,41 @@ async def rag_chat_stream(
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
+            print("--> [CHECKPOINT 6] Inside generate() async generator", flush=True)
+            
+            print("--> [CHECKPOINT 7] Loading vectorstore...", flush=True)
             vs = load_vectorstore(safe_col, user_id=user_id)
+            
+            print("--> [CHECKPOINT 8] Loading documents (pickle)...", flush=True)
             docs = load_documents(safe_col, user_id=user_id)
+            
+            print("--> [CHECKPOINT 9] Documents loaded, getting reranker...", flush=True)
+            reranker = get_reranker_safe()
+            
+            print("--> [CHECKPOINT 10] Building HybridRetriever...", flush=True)
+            candidate_pool = max(req.top_k * 2, RERANK_CANDIDATES) if reranker else max(req.top_k * 2, 16)
             retriever = HybridRetriever(
                 vectorstore=vs, documents=docs,
-                dense_k=max(req.top_k * 2, 16),
-                sparse_k=max(req.top_k * 2, 16),
+                dense_k=candidate_pool,
+                sparse_k=candidate_pool,
                 final_k=req.top_k,
                 dense_weight=DENSE_WEIGHT,
                 sparse_weight=SPARSE_WEIGHT,
+                reranker=reranker,
+                rerank_candidates=RERANK_CANDIDATES,
             )
+            print("--> [CHECKPOINT 11] HybridRetriever created!", flush=True)
+            
             llm = get_llm_from_request(req)
             user_input = req.message
             web_results: list = []
 
             if req.use_web:
+                print("--> [CHECKPOINT 12] Starting Web Search...", flush=True)
                 yield f"data: {json.dumps({'status': 'searching', 'msg': 'Searching the web...'})}\n\n"
                 await asyncio.sleep(0)
                 web_results = await asyncio.to_thread(search, req.message, 10)
+                print("--> [CHECKPOINT 13] Web Search Done", flush=True)
                 if web_results:
                     yield f"data: {json.dumps({'status': 'search_done', 'msg': f'{len(web_results)} results found'})}\n\n"
                     user_input += "\n\n[Web Search Results]\n" + "\n".join(
@@ -652,6 +676,7 @@ async def rag_chat_stream(
                     yield f"data: {json.dumps({'status': 'search_done', 'msg': 'No results found'})}\n\n"
                 await asyncio.sleep(0)
 
+            print("--> [CHECKPOINT 14] Starting rag_stream iteration...", flush=True)
             sources_data = None
             full_answer = ""
 
@@ -661,12 +686,15 @@ async def rag_chat_stream(
                 executor=_executor,
             ):
                 if token.startswith("\x00STATUS\x00"):
+                    print(f"--> [CHECKPOINT 15] rag_stream STATUS: {token}", flush=True)
                     payload = token[len("\x00STATUS\x00"):]
                     if payload == "searching":
-                        yield f"data: {json.dumps({'status': 'retrieving', 'msg': 'Searching knowledge base...'})}\n\n"
+                        rerank_note = " (rerank فعال)" if reranker else ""
+                        yield f"data: {json.dumps({'status': 'retrieving', 'msg': f'در حال جستجو در پایگاه دانش...{rerank_note}'}, ensure_ascii=False)}\n\n"
                     elif payload.startswith("done|"):
                         count = payload.split("|")[1]
-                        yield f"data: {json.dumps({'status': 'retrieval_done', 'msg': f'{count} sources found'})}\n\n"
+                        tag = "نتایج به صورت هوشمند، بازیابی و رنک دهی شدند" if reranker else "بدون rerank"
+                        yield f"data: {json.dumps({'status': 'retrieval_done', 'msg': f'{count} منبع پیدا شد — {tag}'}, ensure_ascii=False)}\n\n"
                     await asyncio.sleep(0)
                     continue
 
@@ -681,6 +709,7 @@ async def rag_chat_stream(
                 yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
                 await asyncio.sleep(0)
 
+            print("--> [CHECKPOINT 16] rag_stream finished. Saving to DB...", flush=True)
             # Persist chat history
             sources_json = json.dumps(sources_data, ensure_ascii=False) if sources_data else None
             async with AsyncSessionLocal() as hist_db:
@@ -707,8 +736,10 @@ async def rag_chat_stream(
             yield f"data: {json.dumps({'done': True})}\n\n"
 
         except asyncio.CancelledError:
+            print("--> [CHECKPOINT ERROR] CancelledError", flush=True)
             pass
         except Exception as e:
+            print(f"--> [CHECKPOINT ERROR] Exception: {e}", flush=True)
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")

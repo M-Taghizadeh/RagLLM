@@ -1,15 +1,15 @@
 """
 RagBot - FastAPI Backend
-RESTful API with SSE streaming for all 4 modules + JWT auth + PostgreSQL
+RESTful API with SSE streaming for all modules + JWT auth + PostgreSQL
 """
 
 import os
-import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.formparsers import MultiPartParser
 
 from routers import chat, rag, article, alerts
 from routers import auth as auth_router
@@ -20,41 +20,31 @@ from services.llm import (
     DEFAULT_TOP_K,
 )
 
-# ── Fix: increase multipart part size to 500 MB for PDF uploads ──────────────
-from starlette.formparsers import MultiPartParser
+# افزایش ظرفیت آپلود فایل‌های حجیم
 MultiPartParser.max_part_size = 500 * 1024 * 1024
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Init PostgreSQL tables
+    # ۱. اتصال به پایگاه داده PostgreSQL
     from services.database import init_db as pg_init
     await pg_init()
 
-    # 1b. Init SQLite tables used by news alerts
+    # ۲. راه‌اندازی دیتابیس هشدارهای خبری
     from routers.alerts import init_alerts_db
     init_alerts_db()
 
-    # 2. Ensure default admin account exists
+    # ۳. بررسی وجود کاربر ادمین
     from services.auth import ensure_admin_exists
     await ensure_admin_exists()
 
-    # 3. Pre-warm BGE-M3 embedding model
-    def _warm():
-        try:
-            from services.embeddings import BGEEmbeddings
-            BGEEmbeddings.get_instance().embed_query("warmup")
-            print("[startup] BGE-M3 embedding model loaded and ready.")
-        except Exception as ex:
-            print(f"[startup] Warning: could not pre-load BGE-M3: {ex}")
-
-    threading.Thread(target=_warm, daemon=True).start()
+    print("[startup] Backend initialized successfully without startup deadlocks.", flush=True)
     yield
 
 
 app = FastAPI(
     title="RagBot API",
-    description="سامانه RAG محلی با FAISS + BGE-M3 + Ollama",
+    description="سامانه هوشمند RAG محلی با FAISS + BGE-M3 + Reranker",
     version="5.0.0",
     lifespan=lifespan,
 )
@@ -83,15 +73,15 @@ def health():
 @app.get("/api/config")
 def get_config():
     return {
-        "default_model":   DEFAULT_MODEL,
-        "ollama_url":      DEFAULT_OLLAMA_URL,
-        "default_top_k":   DEFAULT_TOP_K,
-        "api_base_url":    DEFAULT_API_BASE_URL or "",
-        "api_models":      [],
+        "default_model": DEFAULT_MODEL,
+        "ollama_url": DEFAULT_OLLAMA_URL,
+        "default_top_k": DEFAULT_TOP_K,
+        "api_base_url": DEFAULT_API_BASE_URL or "",
+        "api_models": [],
     }
 
 
-# ── Serve frontend static files (mount LAST) ─────────────────────────────────
+# ── Serve frontend static files ───────────────────────────────────────────────
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 if os.path.isdir(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")

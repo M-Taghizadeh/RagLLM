@@ -1,28 +1,3 @@
-# ── RagBot v2 — Docker Compose ───────────────────────────────────────────────
-#
-# Services:
-#   postgres  — PostgreSQL 16 (users / sessions / collections)
-#   ragbot    — FastAPI backend + static frontend  (internal :8000)
-#   nginx     — reverse proxy + SSL               (host :7443 → container :443)
-#   ollama    — LLM inference server              (port 11434)
-#              profile: linux-gpu  →  فقط روی لینوکس با GPU اجرا می‌شود
-#              روی ویندوز: Ollama را به‌صورت native نصب کنید
-#
-# Quick start (ویندوز / Ollama روی host):
-#   1. cp .env.example .env
-#      DOCKER_OLLAMA_URL=http://host.docker.internal:11434
-#   2. python scripts/download_embedding.py
-#   3. docker compose up -d --build
-#   4. https://localhost:7443
-#
-# Quick start (لینوکس — GPU + Ollama داخل Docker):
-#   1. cp .env.example .env
-#      DOCKER_OLLAMA_URL=http://ollama:11434
-#   2. python scripts/download_embedding.py
-#   3. docker compose --profile linux-gpu -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
-#   4. https://localhost:7443
-# ─────────────────────────────────────────────────────────────────────────────
-
 networks:
   ragbot_net:
     name: ragbot_net
@@ -56,27 +31,41 @@ services:
       dockerfile: Dockerfile
       args:
         PYTHON_VERSION: "3.11"
-        USE_CUDA: ${USE_CUDA:-0}
+        USE_CUDA: ${USE_CUDA:-1}
     image: ragbot:latest
     container_name: ragbot-app
     restart: unless-stopped
-    runtime: ${DOCKER_RUNTIME:-runc}
+    init: true
     expose:
       - "8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     env_file:
       - .env
     environment:
       - DB_PATH=/app/data/ragbot.db
-      # Always use the compose postgres service (overrides local DATABASE_URL from .env)
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ragbot}:${POSTGRES_PASSWORD:-change_this_password}@postgres:5432/${POSTGRES_DB:-ragbot}
-      # Manual (.env): OLLAMA_URL=http://localhost:11434
-      # Docker host Ollama: DOCKER_OLLAMA_URL=http://host.docker.internal:11434
-      # Docker profile linux-gpu: DOCKER_OLLAMA_URL=http://ollama:11434
       - OLLAMA_URL=${DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}
       - JWT_SECRET=${JWT_SECRET:-change_this_secret_in_production}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      # قطع کامل هرگونه تلاش برای اتصال به اینترنت در Hugging Face
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+      - HF_DATASETS_OFFLINE=1
+      # مسیرهای قطعی و مستقیم مدل‌های لوکال
+      - EMBEDDING_MODEL_PATH=/app/models/bge-m3
+      - RERANKER_MODEL_PATH=/app/models/bge-reranker-v2-m3
+      - RERANK_CANDIDATES=20
+      - USE_RERANKER=1
     volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
       - ./models:/app/models:ro
       - faiss_data:/app/backend/faiss_db
       - sqlite_data:/app/data
@@ -94,8 +83,8 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
+      timeout: 25s
+      retries: 5
       start_period: 120s
 
   # ── Nginx (reverse proxy + SSL) ──────────────────────────────────────────────
@@ -116,9 +105,9 @@ services:
     healthcheck:
       test: ["CMD", "wget", "-qO-", "--no-check-certificate", "https://localhost/api/health"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 20s
 
   # ── Ollama LLM server (لینوکس + GPU) ────────────────────────────────────────
   ollama:
@@ -142,7 +131,6 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    # ollama image has no curl — use the CLI instead
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 15s
