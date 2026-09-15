@@ -98,7 +98,7 @@ async def _get_collection_row(db: AsyncSession, user_id: int, folder_id: str) ->
     )
     row = result.scalar_one_or_none()
     if not row:
-        raise HTTPException(404, detail=f"Collection '{folder_id}' not found.")
+        raise HTTPException(404, detail=f"به دانشیار خوش آمدید. سامانه مدیریت پایگاه دانش سازمانی و چت هوشمند روی اسناد. برای شروع ابتدا پایگاه دانش مورد نظر را از بخش انتخاب پایگاه دانش، انتخاب کنید.")
     return row
 
 

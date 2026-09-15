@@ -209,10 +209,10 @@
   function openColModal(mode, col) {
     colModalId$.value          = mode === "rename" ? col.id   : "";
     colModalNameInput$.value   = mode === "rename" ? col.display_name : "";
-    colModalTitle$.textContent = mode === "rename" ? "تغییر نام مجموعه"  : "مجموعه جدید";
+    colModalTitle$.textContent = mode === "rename" ? "تغییر نام مجموعه"  : "افزودن پایگاه دانش";
     colModalSub$.textContent   = mode === "rename"
       ? `مجموعه: ${col.id}`
-      : "یک نام برای مجموعه جدید وارد کنید";
+      : "یک نام برای افزودن پایگاه دانش وارد کنید";
     colModalConfirmLbl$.textContent = mode === "rename" ? "ذخیره" : "ایجاد";
     clearStatus(colModalStatus$);
     colModal$.classList.add("open");
@@ -276,7 +276,7 @@
   async function openDetailModal(col) {
     activeCollection = col;
     detailTitle$.textContent = col.display_name;
-    detailMeta$.textContent  = col._pending ? "مجموعه جدید — هنوز فایلی ندارد" : "در حال بارگذاری...";
+    detailMeta$.textContent  = col._pending ? "افزودن پایگاه دانش — هنوز فایلی ندارد" : "در حال بارگذاری...";
 
     // Reset upload state
     addFilesList   = [];
@@ -573,7 +573,7 @@
     detailUploadBtn$.disabled = true;
     clearStatus(detailUploadStatus$);
     setProgress(2);
-    setStatus(detailUploadStatus$, "⏳ در حال ایندکس کردن فایل‌ها...", "info");
+    setStatus(detailUploadStatus$, "⏳ در حال ذخیره کردن فایل‌ها...", "info");
 
     addFilesJobId = "docsjob_" + Date.now();
     addFilesAbort = new AbortController();
@@ -657,7 +657,7 @@
     detailUploadBtn$.disabled = true;
     clearStatus(detailUploadStatus$);
     setProgress(2);
-    setStatus(detailUploadStatus$, "⏳ در حال ایجاد و ایندکس مجموعه...", "info");
+    setStatus(detailUploadStatus$, "⏳ در حال ایجاد و ذخیره مجموعه...", "info");
 
     const jobId = "docsjob_" + Date.now();
     addFilesJobId = jobId;

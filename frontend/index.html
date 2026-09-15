@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RagBot</title>
+  <title>دانشیار</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -21,7 +21,7 @@
         </svg>
       </div>
       <div class="brand-text">
-        <span class="brand-name">RagBot</span>
+        <span class="brand-name">دانشیار</span>
         <span class="brand-tag">مبتنی بر Hybrid RAG</span>
       </div>
     </div>
@@ -33,23 +33,23 @@
       </button>
       <button class="nav-item" data-section="docs">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h3l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M12 11v4M10 13h4"/></svg>
-        <span class="nav-label">مدیریت اسناد</span>
+        <span class="nav-label">ایجاد پایگاه دانش</span>
       </button>
       <button class="nav-item active" data-section="chat">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v8a3 3 0 01-3 3H9l-5 4v-4a3 3 0 01-0-0z"/></svg>
-        <span class="nav-label">چت بات هوشمند</span>
+        <span class="nav-label">گفتگوی عمومی داخلی</span>
       </button>
       <button class="nav-item" data-section="rag">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-        <span class="nav-label">چت بات اسناد داخلی</span>
+        <span class="nav-label">گفتگو روی پایگاه دانش سازمانی</span>
       </button>
       <button class="nav-item" data-section="article">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
-        <span class="nav-label">چت بات مقالات وب</span>
+        <span class="nav-label">گفتگو بر اساس منابع وب</span>
       </button>
       <button class="nav-item" data-section="alerts">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 016 6c0 4 2 5 2 5H4s2-1 2-5a6 6 0 016-6z"/><path d="M10 19a2 2 0 004 0"/></svg>
-        <span class="nav-label">سیستم هشدار دهی خبری</span>
+        <span class="nav-label">استخراج هشدار از مقالات خبری</span>
       </button>
       <button class="nav-item" data-section="settings">
         <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9c.1.7.7 1.2 1.5 1.3H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
@@ -97,12 +97,12 @@
       <div class="section-header">
         <div>
           <p class="section-eyebrow">Hybrid RAG</p>
-          <h1>چت روی اسناد</h1>
+          <h1>گفتگو روی پایگاه دانش سازمانی</h1>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn-secondary" id="ragHistoryBtn" type="button" title="تاریخچه گفتگو">
             <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:middle;margin-left:5px"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/></svg>
-            تاریخچه
+            گفتگوی قبلی
           </button>
           <button class="btn-secondary" id="clearRag" type="button">گفتگوی جدید</button>
         </div>
@@ -130,7 +130,7 @@
             <div class="custom-select-wrap" id="collectionDropdownWrap">
               <button type="button" class="custom-select-btn" id="collectionDropdownBtn" aria-haspopup="listbox" aria-expanded="false">
                 <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 5h16M2 10h10M2 15h6"/></svg>
-                <span id="collectionDropdownLabel">انتخاب مجموعه</span>
+                <span id="collectionDropdownLabel">انتخاب پایگاه دانش</span>
                 <svg class="caret" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
               </button>
               <ul class="custom-select-list" id="collectionDropdownList" role="listbox" aria-label="مجموعه‌های موجود"></ul>
@@ -143,7 +143,7 @@
 
             <button id="ragIndex" class="btn-primary btn-index" type="button">
               <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 10h16M12 3v14"/></svg>
-              ایندکس گذاری
+              ذخیره سازی محتوا در پایگاه دانش
             </button>
           </div>
 
@@ -216,11 +216,11 @@
       <div class="section-header">
         <div>
           <p class="section-eyebrow">Document Management</p>
-          <h1>مدیریت اسناد</h1>
+          <h1>ایجاد پایگاه دانش</h1>
         </div>
         <button class="btn-primary" id="docsNewCollectionBtn" type="button">
           <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
-          مجموعه جدید
+          افزودن پایگاه دانش
         </button>
       </div>
 
@@ -243,7 +243,7 @@
         <div id="docsEmpty" class="docs-empty" hidden>
           <svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".35"><path d="M8 12a4 4 0 014-4h6l4 4h14a4 4 0 014 4v18a4 4 0 01-4 4H12a4 4 0 01-4-4z"/><path d="M24 22v8M21 26h6"/></svg>
           <p id="docsEmptyMsg">مدیریت فایل ها و مجموعه ها در سامانه</p>
-          <button class="btn-primary" id="docsEmptyNewBtn" type="button" style="margin-top:10px">ساخت مجموعه</button>
+          <button class="btn-primary" id="docsEmptyNewBtn" type="button" style="margin-top:10px">ایجاد پایگاه دانش</button>
         </div>
         <div id="docsLoading" class="docs-loading" style="display:none">
           <span class="docs-spinner"></span>
@@ -546,7 +546,7 @@
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h3l2 2h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         </div>
         <div>
-          <h2 id="docsColModalTitle">مجموعه جدید</h2>
+          <h2 id="docsColModalTitle">افزودن پایگاه دانش</h2>
           <p class="modal-sub" id="docsColModalSub">نام مجموعه را وارد کنید</p>
         </div>
         <button class="modal-close" id="docsColModalClose" type="button" aria-label="بستن">
@@ -560,7 +560,7 @@
           <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h5l2 2h7v10H3z"/></svg>
           <input type="text" id="docsColNameInput" style="text-align: right; direction: rtl;" class="modal-input" placeholder="نام مجموعه را وارد کنید" autocomplete="off" />
         </div>
-        <p class="modal-hint">نام می‌تواند فارسی باشد. برای ایندکس، فایل‌ها را بعد از ساخت مجموعه اضافه کنید.</p>
+        <p class="modal-hint">فایل‌ها را بعد از ایجاد پایگاه دانش، اضافه کنید.</p>
         <div id="docsColModalStatus" class="status-bar" style="margin-top:4px"></div>
       </div>
       <div class="modal-footer">
@@ -611,7 +611,7 @@
         <div id="docsDetailFileChips" class="file-list-inline"></div>
         <button id="docsDetailUploadBtn" class="btn-primary btn-index" type="button" disabled style="margin-right:auto">
           <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 10h16M12 3v14"/></svg>
-          ایندکس
+          ذخیره سازی محتوا
         </button>
       </div>
 
@@ -647,7 +647,7 @@
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V8l8-5 8 5v11"/><path d="M4 11h16M12 3v16"/><rect x="9" y="14" width="6" height="5" rx="1"/></svg>
         </div>
         <div>
-          <h2 id="indexModalTitle">ایندکس اسناد</h2>
+          <h2 id="indexModalTitle">ذخیره محتوا در پایگاه دانش</h2>
           <p class="modal-sub" id="indexModalSub">۰ فایل انتخاب‌شده</p>
         </div>
         <button class="modal-close" id="indexModalClose" type="button" aria-label="بستن">
@@ -670,7 +670,7 @@
         <button class="btn-secondary modal-cancel" id="indexModalCancel" type="button">انصراف</button>
         <button class="btn-primary modal-confirm" id="indexModalConfirm" type="button">
           <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 17V7l8-4 8 4v10"/><path d="M4 11h16M12 3v14"/></svg>
-          شروع ایندکس
+          شروع ذخیره سازی محتوا
         </button>
       </div>
     </div>

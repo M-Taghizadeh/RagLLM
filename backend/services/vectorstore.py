@@ -386,7 +386,7 @@ def build_vectorstore_from_pdfs(
         pickle.dump(all_docs, f)
 
     save_collection_meta(col, display_name, user_id)
-    cb(100, "ایندکس با موفقیت انجام شد ✅")
+    cb(100, "با موفقیت ذخیره شد ✅")
     return vs, len(all_docs)
 
 

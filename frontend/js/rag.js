@@ -193,7 +193,7 @@
 
   const stopIndex$ = document.createElement("button");
   stopIndex$.className = "btn-stop";
-  stopIndex$.textContent = "⏹ لغو ایندکس";
+  stopIndex$.textContent = "⏹ لغو ذخیره سازی";
   stopIndex$.style.display = "none";
   indexBtn$.parentNode.insertBefore(stopIndex$, indexBtn$.nextSibling);
 
@@ -229,7 +229,7 @@
     isIndexing = false;
     indexBtn$.disabled = false;
     stopIndex$.style.display = "none";
-    setStatus(status$, "⚠️ ایندکس لغو شد.", "warn");
+    setStatus(status$, "⚠️ ذخیره سازی محتوا لغو شد.", "warn");
     setProgress(0);
     progressWrap$.style.display = "none";
   }
@@ -321,7 +321,7 @@
         // If deleted collection was selected, reset
         if (collectionIn$.value === collection) {
           collectionIn$.value = "";
-          dropLabel$.textContent = "انتخاب مجموعه";
+          dropLabel$.textContent = "انتخاب پایگاه دانش";
         }
         liEl.remove();
         // Refresh full list to keep collectionsData in sync
@@ -489,7 +489,7 @@
     collectionIn$.value = collection;
     closeIndexModal();
 
-    setStatus(status$, "⏳ شروع ایندکس...", "info");
+    setStatus(status$, "⏳ شروع ذخیره سازی محتوا...", "info");
     setProgress(2);
     indexBtn$.disabled = true;
     isIndexing = true;
@@ -536,8 +536,8 @@
                 setProgress(100);
                 const realName = p.collection || collection;
                 const msg = (realName !== collection)
-                  ? `✅ ایندکس شد: ${p.total_chunks} قطعه از ${p.files} فایل | مجموعه: «${realName}»`
-                  : `✅ ایندکس شد: ${p.total_chunks} قطعه از ${p.files} فایل — مجموعه «${realName}»`;
+                  ? `✅ دخیره شد: ${p.total_chunks} قطعه از ${p.files} فایل | مجموعه: «${realName}»`
+                  : `✅ ذخیره شد: ${p.total_chunks} قطعه از ${p.files} فایل — مجموعه «${realName}»`;
                 setStatus(status$, msg, "ok");
                 selectedFiles = []; renderFileList();
                 collectionIn$.value = realName;
@@ -548,7 +548,7 @@
                 finalizeIndex(); return;
               }
               if (p.cancelled) {
-                setStatus(status$, "⚠️ ایندکس لغو شد.", "warn");
+                setStatus(status$, "⚠️ ذخیره سازی محتوا لغو شد.", "warn");
                 setProgress(0); progressWrap$.style.display = "none";
                 finalizeIndex(); return;
               }
