@@ -12,7 +12,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from services.crawler import fetch_article
+from services.sse import SSE_HEADERS, with_heartbeat
 from services.llm import (
+    DEFAULT_TEMPERATURE,
     get_llm_from_request,
     assert_llm_ready,
     DEFAULT_MODEL,
@@ -43,7 +45,7 @@ class ArticleChatRequest(BaseModel):
     session_id:   str
     model:        str   = DEFAULT_MODEL
     ollama_url:   str   = DEFAULT_OLLAMA_URL
-    temperature:  float = Field(0.3, ge=0.0, le=1.0)
+    temperature:  float = Field(DEFAULT_TEMPERATURE, ge=0.0, le=1.0)
     use_web:      bool  = False
     provider:     str   = "ollama"
     api_base_url: str   = DEFAULT_API_BASE_URL
@@ -88,7 +90,8 @@ async def article_chat_stream(req: ArticleChatRequest):
             status_code=404,
             detail="Session not found. Please fetch a URL first via POST /api/article/fetch"
         )
-    assert_llm_ready(
+    await asyncio.to_thread(
+        assert_llm_ready,
         provider=req.provider,
         ollama_url=req.ollama_url,
         api_base_url=req.api_base_url,
@@ -138,7 +141,7 @@ async def article_chat_stream(req: ArticleChatRequest):
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(with_heartbeat(generate()), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 @router.delete("/session/{session_id}")

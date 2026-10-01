@@ -18,7 +18,10 @@ import re
 import shutil
 import hashlib
 import pickle
+import gc
 import threading
+import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
@@ -34,6 +37,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from services import memory
 from services.embeddings import BGEEmbeddings
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
@@ -146,6 +150,7 @@ def collection_exists(collection: str, user_id: Optional[int] = None) -> bool:
 
 
 def delete_collection(collection: str, user_id: Optional[int] = None) -> None:
+    invalidate_index_cache(collection, user_id)
     p = _store_path(collection, user_id)
     if os.path.isdir(p):
         shutil.rmtree(p)
@@ -215,6 +220,176 @@ def load_vectorstore(
     )
     print("--> [VECTORSTORE] FAISS.load_local finished successfully!", flush=True)
     return vs
+
+
+# ── In-memory index cache ─────────────────────────────────────────────────────
+# Loading FAISS + docs.pkl and building BM25 is expensive, so each collection is
+# loaded once and reused. Entries are keyed by the on-disk file signature, so a
+# re-index / add / delete is picked up automatically on the next query.
+
+# Memory limits are derived at runtime from the server / container RAM (services.memory):
+# the cache never exceeds its share of RAM, and indexes are evicted (LRU first) whenever
+# free memory drops below the safety reserve.
+_INDEX_IDLE_SECONDS = 60 * 60
+_MAX_CACHED_INDEXES = 64
+
+
+class IndexMemoryError(RuntimeError):
+    pass
+
+
+def _estimate_load_bytes(col: str, user_id: Optional[int]) -> int:
+    """Pre-load estimate from file sizes (pickled text expands ~4x once loaded + BM25)."""
+    p = _store_path(col, user_id)
+    total = 0
+    for name, factor in (("index.faiss", 1), ("index.pkl", 2), ("docs.pkl", 4)):
+        try:
+            total += os.path.getsize(os.path.join(p, name)) * factor
+        except OSError:
+            pass
+    return total
+
+
+def _estimate_index_bytes(vs, docs) -> int:
+    vec_bytes = 0
+    try:
+        vec_bytes = int(vs.index.ntotal) * int(vs.index.d) * 4
+    except Exception:
+        pass
+    text_bytes = sum(len(d.page_content) for d in docs) if docs else 0
+    # Text lives in docs + FAISS docstore + BM25 token lists (≈4 copies incl. Python overhead).
+    return vec_bytes + text_bytes * 4
+
+
+class LoadedIndex:
+    __slots__ = ("vectorstore", "documents", "bm25", "signature", "size_bytes", "last_used")
+
+    def __init__(self, vectorstore, documents, bm25, signature):
+        self.vectorstore = vectorstore
+        self.documents = documents
+        self.bm25 = bm25
+        self.signature = signature
+        self.size_bytes = _estimate_index_bytes(vectorstore, documents)
+        self.last_used = time.monotonic()
+
+
+_index_cache: "OrderedDict[tuple, LoadedIndex]" = OrderedDict()
+_index_cache_lock = threading.Lock()
+_index_key_locks: dict[tuple, threading.Lock] = {}
+
+
+def _index_signature(col: str, user_id: Optional[int]) -> tuple:
+    p = _store_path(col, user_id)
+    sig = []
+    for name in ("index.faiss", "index.pkl", "docs.pkl"):
+        try:
+            st = os.stat(os.path.join(p, name))
+            sig.append((st.st_mtime_ns, st.st_size))
+        except OSError:
+            sig.append(None)
+    return tuple(sig)
+
+
+def _evict_locked(keep: Optional[tuple] = None, need_bytes: int = 0) -> int:
+    """
+    Caller holds _index_cache_lock. `keep` (in use right now) is never evicted.
+    Returns bytes released. Requests already holding an evicted index keep working;
+    its memory is freed when they finish.
+    """
+    now = time.monotonic()
+    released = 0
+    for k in [k for k, e in _index_cache.items() if k != keep and now - e.last_used > _INDEX_IDLE_SECONDS]:
+        released += _index_cache.pop(k).size_bytes
+
+    budget = memory.cache_budget_bytes()
+    reserve = memory.reserve_bytes()
+    while _index_cache:
+        cached = sum(e.size_bytes for e in _index_cache.values())
+        headroom = memory.available_bytes() + released - need_bytes
+        if cached <= budget and headroom >= reserve and len(_index_cache) <= _MAX_CACHED_INDEXES:
+            break
+        victim = next((k for k in _index_cache if k != keep), None)
+        if victim is None:
+            break
+        released += _index_cache.pop(victim).size_bytes
+        print(f"--> [VECTORSTORE] Evicted index {victim} from cache (memory)", flush=True)
+    if released:
+        gc.collect()
+    return released
+
+
+def _cached_entry(key: tuple, signature: tuple) -> Optional[LoadedIndex]:
+    with _index_cache_lock:
+        entry = _index_cache.get(key)
+        if entry is not None and entry.signature == signature:
+            entry.last_used = time.monotonic()
+            _index_cache.move_to_end(key)
+            _evict_locked(keep=key)
+            return entry
+    return None
+
+
+def is_index_cached(collection: str, user_id: Optional[int] = None) -> bool:
+    col = sanitize_collection_name(collection)
+    return _cached_entry((user_id, col), _index_signature(col, user_id)) is not None
+
+
+def invalidate_index_cache(collection: str, user_id: Optional[int] = None) -> None:
+    col = sanitize_collection_name(collection)
+    with _index_cache_lock:
+        _index_cache.pop((user_id, col), None)
+
+
+def get_loaded_index(collection: str, user_id: Optional[int] = None) -> Optional[LoadedIndex]:
+    """Blocking; call from a worker thread. Concurrent callers share a single load."""
+    from langchain_community.retrievers import BM25Retriever
+    from services.text_normalize import persian_tokenize
+
+    col = sanitize_collection_name(collection)
+    key = (user_id, col)
+    signature = _index_signature(col, user_id)
+    entry = _cached_entry(key, signature)
+    if entry is not None:
+        return entry
+
+    with _index_cache_lock:
+        key_lock = _index_key_locks.setdefault(key, threading.Lock())
+
+    with key_lock:
+        signature = _index_signature(col, user_id)
+        entry = _cached_entry(key, signature)
+        if entry is not None:
+            return entry
+
+        need = _estimate_load_bytes(col, user_id)
+        with _index_cache_lock:
+            _index_cache.pop(key, None)
+            released = _evict_locked(keep=None, need_bytes=need)
+        if memory.available_bytes() + released - need < memory.reserve_bytes() // 2:
+            raise IndexMemoryError(
+                "حافظه سرور برای بارگذاری این پایگاه دانش کافی نیست. "
+                "چند لحظه بعد دوباره تلاش کنید یا پایگاه دانش را کوچک‌تر کنید."
+            )
+
+        vs = load_vectorstore(col, user_id=user_id)
+        if vs is None:
+            return None
+        docs = load_documents(col, user_id=user_id)
+        bm25 = BM25Retriever.from_documents(docs, preprocess_func=persian_tokenize) if docs else None
+        entry = LoadedIndex(vs, docs, bm25, signature)
+
+        with _index_cache_lock:
+            _index_cache[key] = entry
+            _evict_locked(keep=key)
+            # Too big to keep alongside everything else: serve this request, then let it go.
+            if memory.available_bytes() < memory.reserve_bytes():
+                _index_cache.pop(key, None)
+        print(
+            f"--> [VECTORSTORE] Loaded index '{col}' (user={user_id}, docs={len(docs)}, "
+            f"~{entry.size_bytes / 1048576:.0f} MB, free RAM {memory.available_bytes() / 1048576:.0f} MB)",
+            flush=True,
+        )
+        return entry
 
 
 # ── File splitter ─────────────────────────────────────────────────────────────

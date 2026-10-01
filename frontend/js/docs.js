@@ -534,7 +534,7 @@
   });
 
   function addToStagedFiles(files) {
-    files.forEach(f => {
+    filterKbFilesBySize(files.filter(isAllowed)).forEach(f => {
       if (isAllowed(f) && !addFilesList.find(x => x.name === f.name)) addFilesList.push(f);
     });
     renderDetailFileChips();

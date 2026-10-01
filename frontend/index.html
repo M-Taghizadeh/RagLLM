@@ -87,9 +87,20 @@
         <button class="btn-secondary" id="clearChat" type="button">پاک کردن</button>
       </div>
       <div class="chat-window" id="chatWindow"></div>
-      <div class="chat-input-area">
-        <textarea id="chatInput" class="chat-textarea" placeholder="پیام خود را بنویسید..." rows="2"></textarea>
-        <button id="chatSend" class="btn-send" type="button">ارسال</button>
+      <div class="chat-composer" id="chatComposer">
+        <div class="attach-preview" id="chatAttachPreview" hidden></div>
+        <div class="chat-input-area">
+          <button type="button" class="btn-attach" id="chatAttachBtn" title="پیوست تصویر یا فایل" aria-label="پیوست">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-8.49 8.49a5.5 5.5 0 01-7.78-7.78l8.49-8.49a3.5 3.5 0 014.95 4.95l-8.5 8.49a1.5 1.5 0 01-2.12-2.12l7.78-7.78"/></svg>
+          </button>
+          <input type="file" id="chatAttachInput" hidden multiple
+            accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.docx,.py,.js,.ts,.tsx,.jsx,.json,.md,.txt,.csv,.html,.css,.xml,.yaml,.yml,.sql,.sh,.java,.c,.cpp,.h,.go,.rs,.php,.rb,.cs" />
+          <textarea id="chatInput" class="chat-textarea" placeholder="پیام بنویسید…" rows="1"></textarea>
+          <button id="chatSend" class="btn-send" type="button">
+            <span>ارسال</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -152,9 +163,20 @@
       </div>
 
       <div class="chat-window" id="ragChatWindow"></div>
-      <div class="chat-input-area">
-        <textarea id="ragInput" class="chat-textarea" placeholder="سؤال درباره اسناد..." rows="2"></textarea>
-        <button id="ragSend" class="btn-send" type="button">ارسال</button>
+      <div class="chat-composer" id="ragComposer">
+        <div class="attach-preview" id="ragAttachPreview" hidden></div>
+        <div class="chat-input-area">
+          <button type="button" class="btn-attach" id="ragAttachBtn" title="پیوست تصویر یا فایل" aria-label="پیوست">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-8.49 8.49a5.5 5.5 0 01-7.78-7.78l8.49-8.49a3.5 3.5 0 014.95 4.95l-8.5 8.49a1.5 1.5 0 01-2.12-2.12l7.78-7.78"/></svg>
+          </button>
+          <input type="file" id="ragAttachInput" hidden multiple
+            accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.docx,.py,.js,.ts,.tsx,.jsx,.json,.md,.txt,.csv,.html,.css,.xml,.yaml,.yml,.sql,.sh,.java,.c,.cpp,.h,.go,.rs,.php,.rb,.cs" />
+          <textarea id="ragInput" class="chat-textarea" placeholder="پیام بنویسید…" rows="1"></textarea>
+          <button id="ragSend" class="btn-send" type="button">
+            <span>ارسال</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- History panel (slide-in from left) -->
@@ -206,9 +228,14 @@
       </div>
 
       <div class="chat-window" id="articleChatWindow"></div>
-      <div class="chat-input-area">
-        <textarea id="articleInput" class="chat-textarea" placeholder="سؤال درباره مقاله..." rows="2"></textarea>
-        <button id="articleSend" class="btn-send" type="button">ارسال</button>
+      <div class="chat-composer" id="articleComposer">
+        <div class="chat-input-area">
+          <textarea id="articleInput" class="chat-textarea" placeholder="سؤال درباره مقاله…" rows="1"></textarea>
+          <button id="articleSend" class="btn-send" type="button">
+            <span>ارسال</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
       </div>
     </section>
 

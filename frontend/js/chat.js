@@ -1,23 +1,33 @@
 /**
  * chat.js — Plain chatbot module
  * Endpoint: POST /api/chat/stream  (SSE)
- * Supports: stop button, abort on page unload
+ * Supports: attachments (image/PDF/docx/code), stop button, abort on page unload
  */
 
 (function () {
   let sessionId   = newSessionId("chat");
   let isStreaming  = false;
-  let abortCtrl    = null;   // AbortController for current request
+  let abortCtrl    = null;
 
   const window$ = document.getElementById("chatWindow");
   const input$  = document.getElementById("chatInput");
   const send$   = document.getElementById("chatSend");
   const clear$  = document.getElementById("clearChat");
+  const attachBtn$ = document.getElementById("chatAttachBtn");
+  const attachInput$ = document.getElementById("chatAttachInput");
+  const attachPreview$ = document.getElementById("chatAttachPreview");
 
-  // ── Inject stop button next to send ─────────────────────────────
+  const attachments = createAttachController({
+    input$: attachInput$,
+    preview$: attachPreview$,
+    dropZone$: document.getElementById("chatComposer"),
+  });
+
+  attachBtn$?.addEventListener("click", () => attachInput$?.click());
+
   const stopBtn$ = document.createElement("button");
   stopBtn$.className = "btn-stop";
-  stopBtn$.textContent = "⏹ توقف";
+  stopBtn$.textContent = "توقف";
   stopBtn$.style.display = "none";
   send$.parentNode.insertBefore(stopBtn$, send$.nextSibling);
 
@@ -33,10 +43,7 @@
     stopBtn$.style.display = "none";
   }
 
-  // Stop on page unload / refresh
   window.addEventListener("beforeunload", () => { if (abortCtrl) abortCtrl.abort(); });
-
-  // ── Render helpers ───────────────────────────────────────────────
 
   function appendMessage(role, text = "") {
     const wrap   = document.createElement("div");
@@ -58,15 +65,15 @@
     return { wrap, bubble };
   }
 
-  // ── Send logic ───────────────────────────────────────────────────
-
   function sendMessage() {
     const text = input$.value.trim();
-    if (!text || isStreaming) return;
+    const files = attachments.getFiles();
+    if ((!text && !files.length) || isStreaming) return;
 
-    appendMessage("user", text);
+    appendUserBubble(window$, text, files);
     input$.value = "";
     input$.style.height = "auto";
+    attachments.clear();
 
     const settings = getSettings();
     const { wrap, bubble } = appendMessage("assistant", "");
@@ -80,17 +87,37 @@
     let statusBubble = null;
     let rawText = "";
 
-    fetch(`${API_BASE}/chat/stream`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
-        message: text, session_id: sessionId,
-        ...llmRequestFields(settings),
-      }),
-      signal: abortCtrl.signal,
-    })
+    const fields = {
+      message: text,
+      session_id: sessionId,
+      ...llmRequestFields(settings),
+    };
+
+    let fetchOpts;
+    if (files.length) {
+      fetchOpts = {
+        method: "POST",
+        body: buildChatFormData(fields, files),
+        signal: abortCtrl.signal,
+      };
+    } else {
+      fetchOpts = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+        signal: abortCtrl.signal,
+      };
+    }
+
+    fetch(`${API_BASE}/chat/stream`, fetchOpts)
     .then(res => {
-      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
+      if (!res.ok) return res.json().then(e => {
+        const detail = e.detail;
+        const msg = typeof detail === "string" ? detail
+          : Array.isArray(detail) ? detail.map(d => d.msg || d).join(" ")
+          : (res.statusText || "خطا");
+        throw new Error(msg);
+      });
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
       let   buf     = "";
@@ -140,8 +167,6 @@
     }
   }
 
-  // ── Events ───────────────────────────────────────────────────────
-
   send$.addEventListener("click", sendMessage);
   input$.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -154,6 +179,7 @@
   clear$.addEventListener("click", async () => {
     stopStreaming();
     window$.innerHTML = "";
+    attachments.clear();
     sessionId = newSessionId("chat");
     try { await apiPost(`/chat/clear?session_id=${sessionId}`); } catch {}
   });

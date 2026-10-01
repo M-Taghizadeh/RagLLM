@@ -15,6 +15,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from services.crawler import fetch_article, fetch_rss, is_rss_url
+from services.sse import SSE_HEADERS, with_heartbeat
 from services.llm import (
     get_llm_from_request,
     assert_llm_ready,
@@ -212,7 +213,8 @@ async def scan_url(req: ScanRequest):
     """Scan a URL or RSS feed against alert rules using LLM."""
 
     # ── 1. Check LLM provider ──────────────────────────────────────
-    assert_llm_ready(
+    await asyncio.to_thread(
+        assert_llm_ready,
         provider=req.provider,
         ollama_url=req.ollama_url,
         api_base_url=req.api_base_url,
@@ -320,7 +322,8 @@ def _sse(data: dict) -> str:
 async def scan_url_stream(req: ScanRequest):
     """Same as /scan but streams SSE events per article."""
 
-    assert_llm_ready(
+    await asyncio.to_thread(
+        assert_llm_ready,
         provider=req.provider,
         ollama_url=req.ollama_url,
         api_base_url=req.api_base_url,
@@ -436,4 +439,4 @@ async def scan_url_stream(req: ScanRequest):
             "alerts_found":     alerts_found,
         })
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(with_heartbeat(generate()), media_type="text/event-stream", headers=SSE_HEADERS)

@@ -65,6 +65,7 @@ class HybridRetriever:
         sparse_weight: float = 0.3,
         reranker: Optional[Reranker] = None,
         rerank_candidates: int = 30,
+        bm25: Optional[BM25Retriever] = None,
     ):
         self.vectorstore = vectorstore
         self.dense_k = dense_k
@@ -74,12 +75,16 @@ class HybridRetriever:
         self.sparse_weight = sparse_weight
         self.reranker = reranker
         self.rerank_candidates = rerank_candidates
-        self.bm25: Optional[BM25Retriever] = None
-        if documents:
+        # May be shared across concurrent requests (index cache) — treat as read-only.
+        self.bm25: Optional[BM25Retriever] = bm25
+        if self.bm25 is None and documents:
             self.bm25 = BM25Retriever.from_documents(
                 documents, preprocess_func=persian_tokenize
             )
-            self.bm25.k = sparse_k
+
+    def _sparse_search(self, query: str, k: int) -> List[Document]:
+        tokens = self.bm25.preprocess_func(query)
+        return self.bm25.vectorizer.get_top_n(tokens, self.bm25.docs, n=k)
 
     def invoke(self, query: str, k: Optional[int] = None) -> List[Document]:
             import time
@@ -95,10 +100,7 @@ class HybridRetriever:
                 candidates = dense_docs[:pool_n]
             else:
                 t1 = time.time()
-                prev_bm25_k = self.bm25.k
-                self.bm25.k = max(self.sparse_k, pool_n)
-                sparse_docs = self.bm25.invoke(query)
-                self.bm25.k = prev_bm25_k
+                sparse_docs = self._sparse_search(query, max(self.sparse_k, pool_n))
 
                 candidates = reciprocal_rank_fusion(
                     [dense_docs, sparse_docs],

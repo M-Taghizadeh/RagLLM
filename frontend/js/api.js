@@ -392,6 +392,293 @@ function llmRequestFields(settings = getSettings()) {
   };
 }
 
+/** Allowed chat attachment extensions (client-side filter; server re-validates). */
+const CHAT_ATTACH_ACCEPT = new Set([
+  "png","jpg","jpeg","webp","gif","pdf","docx",
+  "py","js","ts","tsx","jsx","json","md","txt","csv",
+  "html","htm","css","xml","yaml","yml","sql","sh",
+  "java","c","cpp","h","hpp","go","rs","php","rb","cs","bat","ps1","toml","ini","kt","swift",
+]);
+// Overwritten from /api/config (values come from .env on the server).
+const UPLOAD_LIMITS = { kb_file_mb: 500, chat_doc_mb: 15, chat_image_mb: 8, chat_max_files: 5 };
+
+function applyUploadLimits(cfg) {
+  const src = cfg && cfg.upload_limits;
+  if (!src) return;
+  for (const k of Object.keys(UPLOAD_LIMITS)) {
+    const v = Number(src[k]);
+    if (Number.isFinite(v) && v > 0) UPLOAD_LIMITS[k] = v;
+  }
+}
+
+/** Returns files within the knowledge-base size limit; alerts for the rest. */
+function filterKbFilesBySize(list) {
+  const max = UPLOAD_LIMITS.kb_file_mb * 1024 * 1024;
+  const tooBig = list.filter(f => f.size > max);
+  if (tooBig.length) {
+    alert(`حجم این فایل‌ها بیش از ${UPLOAD_LIMITS.kb_file_mb} مگابایت است:\n` + tooBig.map(f => f.name).join("\n"));
+  }
+  return list.filter(f => f.size <= max);
+}
+
+function isImageFile(file) {
+  return /\.(png|jpe?g|webp|gif)$/i.test(file.name) || (file.type || "").startsWith("image/");
+}
+
+function createAttachController({ input$, preview$, dropZone$, maxFiles }) {
+  let files = [];
+
+  function render() {
+    preview$.innerHTML = "";
+    if (!files.length) {
+      preview$.hidden = true;
+      return;
+    }
+    preview$.hidden = false;
+    files.forEach((file, idx) => {
+      const chip = document.createElement("div");
+      chip.className = "attach-chip";
+      if (isImageFile(file)) {
+        const img = document.createElement("img");
+        img.alt = file.name;
+        img.src = URL.createObjectURL(file);
+        img.onload = () => URL.revokeObjectURL(img.src);
+        chip.appendChild(img);
+      }
+      const name = document.createElement("span");
+      name.className = "attach-name";
+      name.textContent = file.name;
+      chip.appendChild(name);
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "attach-remove";
+      rm.textContent = "×";
+      rm.title = "حذف";
+      rm.addEventListener("click", () => {
+        files.splice(idx, 1);
+        render();
+      });
+      chip.appendChild(rm);
+      preview$.appendChild(chip);
+    });
+  }
+
+  function addFiles(list) {
+    for (const f of list) {
+      if (files.length >= (maxFiles || UPLOAD_LIMITS.chat_max_files)) break;
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      if (!CHAT_ATTACH_ACCEPT.has(ext)) {
+        alert(`پسوند .${ext} مجاز نیست.`);
+        continue;
+      }
+      const maxMb = isImageFile(f) ? UPLOAD_LIMITS.chat_image_mb : UPLOAD_LIMITS.chat_doc_mb;
+      if (f.size > maxMb * 1024 * 1024) {
+        alert(`فایل «${f.name}» بزرگ‌تر از ${maxMb}MB است.`);
+        continue;
+      }
+      files.push(f);
+    }
+    render();
+  }
+
+  input$?.addEventListener("change", () => {
+    if (input$.files?.length) addFiles(Array.from(input$.files));
+    input$.value = "";
+  });
+
+  // Drag & drop onto composer / input area
+  if (dropZone$) {
+    let dragDepth = 0;
+    const onDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragDepth += 1;
+      dropZone$.classList.add("drag-over");
+    };
+    const onDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+    };
+    const onDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) dropZone$.classList.remove("drag-over");
+    };
+    const onDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragDepth = 0;
+      dropZone$.classList.remove("drag-over");
+      const dropped = e.dataTransfer?.files;
+      if (dropped?.length) addFiles(Array.from(dropped));
+    };
+    dropZone$.addEventListener("dragenter", onDragEnter);
+    dropZone$.addEventListener("dragover", onDragOver);
+    dropZone$.addEventListener("dragleave", onDragLeave);
+    dropZone$.addEventListener("drop", onDrop);
+  }
+
+  return {
+    getFiles: () => files.slice(),
+    clear: () => { files = []; render(); },
+    hasFiles: () => files.length > 0,
+    addFiles,
+  };
+}
+
+/** File card header: extension badge + name (LTR-isolated so "1.docx" is not shown as "docx.1") + hint. */
+function fillFileHead(el, name, hint) {
+  const ext = ((name || "").split(".").pop() || "").toLowerCase();
+  const kind = ext === "pdf" ? "pdf"
+    : (ext === "docx" || ext === "doc") ? "word"
+    : "code";
+  el.dataset.kind = kind;
+  el.innerHTML =
+    `<span class="hist-file-icon">${escHtml((ext || "file").slice(0, 4).toUpperCase())}</span>` +
+    `<span class="hist-file-meta">` +
+      `<bdi class="hist-file-name" dir="ltr" title="${escHtml(name || "")}">${escHtml(name || "فایل")}</bdi>` +
+      `<span class="hist-file-hint">${escHtml(hint)}</span>` +
+    `</span>`;
+}
+
+function appendUserBubble(window$, text, files = []) {
+  const wrap = document.createElement("div");
+  wrap.className = "chat-message user";
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble";
+  if (text) bubble.textContent = text;
+  if (files.length) {
+    const row = document.createElement("div");
+    row.className = "user-attach-row";
+    files.forEach((f) => {
+      if (isImageFile(f)) {
+        const img = document.createElement("img");
+        img.alt = f.name;
+        img.src = URL.createObjectURL(f);
+        row.appendChild(img);
+      } else {
+        const card = document.createElement("div");
+        card.className = "hist-file";
+        const head = document.createElement("div");
+        head.className = "hist-file-toggle static";
+        fillFileHead(head, f.name, "پیوست شد");
+        card.appendChild(head);
+        row.appendChild(card);
+      }
+    });
+    bubble.appendChild(row);
+  }
+  const meta = document.createElement("div");
+  meta.className = "chat-meta";
+  meta.textContent = "شما";
+  wrap.appendChild(bubble);
+  wrap.appendChild(meta);
+  window$.appendChild(wrap);
+  window$.scrollTop = window$.scrollHeight;
+  return { wrap, bubble };
+}
+
+function buildChatFormData(fields, files) {
+  const fd = new FormData();
+  Object.entries(fields).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    fd.append(k, typeof v === "boolean" ? (v ? "true" : "false") : String(v));
+  });
+  (files || []).forEach((f) => fd.append("files", f, f.name));
+  return fd;
+}
+
+/** Render stored history user content (<<<FILE>>> / <<<IMG>>> → chips + images). */
+function renderUserContent(bubble, content) {
+  const raw = content || "";
+  if (!/<<<FILE name=|<<<IMG name=/.test(raw)) {
+    bubble.textContent = raw;
+    return;
+  }
+
+  bubble.textContent = "";
+  const tokens = [];
+  let cursor = 0;
+  const combined = /<<<FILE name="([^"]*)">>>\n?([\s\S]*?)<<<ENDFILE>>>|<<<IMG name="([^"]*)" src="([^"]*)">>>/g;
+  let m;
+  while ((m = combined.exec(raw)) !== null) {
+    if (m.index > cursor) {
+      tokens.push({ type: "text", value: raw.slice(cursor, m.index) });
+    }
+    if (m[0].startsWith("<<<FILE")) {
+      tokens.push({ type: "file", name: m[1], text: m[2] });
+    } else {
+      tokens.push({ type: "img", name: m[3], src: m[4] });
+    }
+    cursor = m.index + m[0].length;
+  }
+  if (cursor < raw.length) tokens.push({ type: "text", value: raw.slice(cursor) });
+
+  tokens.forEach((t) => {
+    if (t.type === "text") {
+      const piece = (t.value || "").trim();
+      if (!piece) return;
+      const p = document.createElement("div");
+      p.className = "user-text";
+      p.textContent = piece;
+      bubble.appendChild(p);
+    } else if (t.type === "file") {
+      const wrap = document.createElement("div");
+      wrap.className = "hist-file";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "hist-file-toggle";
+      fillFileHead(btn, t.name, "مشاهده متن");
+      btn.insertAdjacentHTML(
+        "beforeend",
+        `<svg class="hist-file-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`
+      );
+      const body = document.createElement("pre");
+      body.className = "hist-file-body";
+      body.hidden = true;
+      body.textContent = t.text || "";
+      btn.addEventListener("click", () => {
+        const open = body.hidden;
+        body.hidden = !open;
+        btn.classList.toggle("open", open);
+        btn.querySelector(".hist-file-hint").textContent = open ? "بستن" : "مشاهده متن";
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(body);
+      bubble.appendChild(wrap);
+    } else if (t.type === "img") {
+      const wrap = document.createElement("div");
+      wrap.className = "hist-img";
+      const img = document.createElement("img");
+      img.alt = t.name || "تصویر";
+      img.loading = "lazy";
+      const src = t.src.startsWith("/") ? t.src : `/${t.src}`;
+      fetch(src, { headers: _authHeaders() })
+        .then((r) => {
+          if (!r.ok) throw new Error("img");
+          return r.blob();
+        })
+        .then((blob) => {
+          img.src = URL.createObjectURL(blob);
+        })
+        .catch(() => {
+          wrap.classList.add("broken");
+          wrap.textContent = t.name || "تصویر";
+        });
+      wrap.appendChild(img);
+      if (t.name) {
+        const cap = document.createElement("div");
+        cap.className = "hist-img-cap";
+        cap.textContent = t.name;
+        wrap.appendChild(cap);
+      }
+      bubble.appendChild(wrap);
+    }
+  });
+}
+
 function newSessionId(prefix = "s") {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }

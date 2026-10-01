@@ -4,7 +4,11 @@ LLM Service - Ollama + OpenAI-compatible API providers.
 
 import json
 import os
+import time
 import asyncio
+import threading
+
+import httpx
 from pathlib import Path
 from typing import Any, AsyncIterator, Iterable, List, Optional, Union
 
@@ -34,6 +38,12 @@ DEFAULT_TOP_K      = int(os.environ.get("RAG_TOP_K", "8"))
 DENSE_WEIGHT       = float(os.environ.get("DENSE_WEIGHT", "0.7"))
 SPARSE_WEIGHT      = float(os.environ.get("SPARSE_WEIGHT", "0.3"))
 DEFAULT_NUM_CTX    = int(os.environ.get("NUM_CTX", "8192"))
+DEFAULT_TEMPERATURE = float(os.environ.get("DEFAULT_TEMPERATURE", "0.3"))
+
+# Slow models on server hardware may think for minutes before the first token.
+# Read timeout = max silence allowed between two chunks from the model server.
+LLM_CONNECT_TIMEOUT = 15.0
+LLM_READ_TIMEOUT    = 1800.0
 
 DEFAULT_API_BASE_URL = os.environ.get("API_BASE_URL", "")
 
@@ -60,15 +70,37 @@ def _msg_role(msg: Any) -> str:
     return "user"
 
 
-def _msg_content(msg: Any) -> str:
+def _msg_content(msg: Any) -> Any:
+    """Preserve multimodal content blocks (list) for vision models."""
     if hasattr(msg, "content"):
         c = msg.content
-        return c if isinstance(c, str) else str(c)
+        if isinstance(c, (str, list)):
+            return c
+        return str(c)
     return str(msg)
 
 
 def _to_openai_messages(messages: Iterable[Any]) -> List[dict]:
-    return [{"role": _msg_role(m), "content": _msg_content(m)} for m in messages]
+    out: List[dict] = []
+    for m in messages:
+        content = _msg_content(m)
+        if isinstance(content, list):
+            normalized = []
+            for block in content:
+                if not isinstance(block, dict):
+                    normalized.append(block)
+                    continue
+                if block.get("type") == "image_url":
+                    raw = block.get("image_url")
+                    if isinstance(raw, str):
+                        normalized.append({"type": "image_url", "image_url": {"url": raw}})
+                    else:
+                        normalized.append(block)
+                else:
+                    normalized.append(block)
+            content = normalized
+        out.append({"role": _msg_role(m), "content": content})
+    return out
 
 
 class _SimpleChunk:
@@ -87,13 +119,13 @@ class OpenAICompatLLM:
         model: str,
         api_token: str,
         temperature: float = 0.3,
-        timeout: int = 180,
+        timeout: float | None = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.api_token = api_token or ""
         self.temperature = temperature
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else LLM_READ_TIMEOUT
 
     def _headers(self) -> dict:
         h = {"Content-Type": "application/json"}
@@ -116,10 +148,21 @@ class OpenAICompatLLM:
         return f"{base}/v1/chat/completions"
 
     async def astream(self, messages: Iterable[Any]) -> AsyncIterator[_SimpleChunk]:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         queue: asyncio.Queue = asyncio.Queue()
         sentinel = object()
+        stop = threading.Event()
 
+        def _emit(item):
+            if stop.is_set():
+                return
+            try:
+                loop.call_soon_threadsafe(queue.put_nowait, item)
+            except RuntimeError:
+                stop.set()
+
+        # Dedicated thread (not the shared default executor): a multi-minute generation
+        # must never starve to_thread() calls used by every other request.
         def _run():
             try:
                 with requests.post(
@@ -127,7 +170,7 @@ class OpenAICompatLLM:
                     headers=self._headers(),
                     json=self._payload(messages, stream=True),
                     stream=True,
-                    timeout=self.timeout,
+                    timeout=(LLM_CONNECT_TIMEOUT, self.timeout),
                 ) as resp:
                     if resp.status_code >= 400:
                         try:
@@ -136,6 +179,8 @@ class OpenAICompatLLM:
                             detail = resp.text
                         raise RuntimeError(f"API error {resp.status_code}: {detail}")
                     for raw in resp.iter_lines(decode_unicode=True):
+                        if stop.is_set():
+                            return
                         if not raw:
                             continue
                         line = raw.strip()
@@ -158,21 +203,24 @@ class OpenAICompatLLM:
                             msg = choices[0].get("message") or {}
                             token = msg.get("content") or ""
                         if token:
-                            loop.call_soon_threadsafe(queue.put_nowait, token)
+                            _emit(token)
             except Exception as e:
-                loop.call_soon_threadsafe(queue.put_nowait, e)
+                _emit(e)
             finally:
-                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+                _emit(sentinel)
 
-        asyncio.create_task(asyncio.to_thread(_run))
+        threading.Thread(target=_run, name="llm-api-stream", daemon=True).start()
 
-        while True:
-            item = await queue.get()
-            if item is sentinel:
-                break
-            if isinstance(item, Exception):
-                raise item
-            yield _SimpleChunk(item)
+        try:
+            while True:
+                item = await queue.get()
+                if item is sentinel:
+                    break
+                if isinstance(item, Exception):
+                    raise item
+                yield _SimpleChunk(item)
+        finally:
+            stop.set()
 
     async def ainvoke(self, messages: Iterable[Any]) -> _SimpleChunk:
         def _call():
@@ -180,7 +228,7 @@ class OpenAICompatLLM:
                 self._chat_url(),
                 headers=self._headers(),
                 json=self._payload(messages, stream=False),
-                timeout=self.timeout,
+                timeout=(LLM_CONNECT_TIMEOUT, self.timeout),
             )
             if resp.status_code >= 400:
                 try:
@@ -201,12 +249,30 @@ class OpenAICompatLLM:
 
 # ── Availability ───────────────────────────────────────────────────────────────
 
+_OLLAMA_OK_TTL = 30.0
+_ollama_last_ok: dict[str, float] = {}
+
+
 def check_ollama(base_url: str = DEFAULT_OLLAMA_URL) -> bool:
-    try:
-        resp = requests.get(f"{base_url.rstrip('/')}/api/tags", timeout=3)
-        return resp.status_code == 200
-    except Exception:
-        return False
+    """
+    Ollama can stall for a few seconds (model loading into VRAM, self-update restart),
+    so retry with a longer timeout instead of failing the chat on the first hiccup.
+    """
+    url = base_url.rstrip("/")
+    if time.monotonic() - _ollama_last_ok.get(url, 0.0) < _OLLAMA_OK_TTL:
+        return True
+    for attempt in range(3):
+        try:
+            resp = requests.get(f"{url}/api/tags", timeout=8)
+            if resp.status_code == 200:
+                _ollama_last_ok[url] = time.monotonic()
+                return True
+        except Exception:
+            pass
+        if attempt < 2:
+            time.sleep(1.5)
+    _ollama_last_ok.pop(url, None)
+    return False
 
 
 def check_api(base_url: str, api_token: str = "") -> bool:
@@ -293,6 +359,7 @@ def get_llm(
             model=model,
             temperature=temperature,
             num_ctx=num_ctx,
+            client_kwargs={"timeout": httpx.Timeout(LLM_READ_TIMEOUT, connect=LLM_CONNECT_TIMEOUT)},
         )
     return _cache[key]
 
@@ -300,7 +367,11 @@ def get_llm(
 def get_llm_from_request(req: Any, temperature: Optional[float] = None) -> Union[ChatOllama, OpenAICompatLLM]:
     """Build LLM from a request object that may include provider/api fields."""
     provider = _normalize_provider(getattr(req, "provider", "ollama"))
-    temp = temperature if temperature is not None else float(getattr(req, "temperature", 0.3) or 0.3)
+    if temperature is not None:
+        temp = temperature
+    else:
+        req_temp = getattr(req, "temperature", None)
+        temp = float(req_temp) if req_temp is not None else DEFAULT_TEMPERATURE
     model = getattr(req, "model", None) or DEFAULT_MODEL
 
     if provider == "api":

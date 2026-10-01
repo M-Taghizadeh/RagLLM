@@ -3,10 +3,11 @@ RAG Chain — hybrid retrieval + streaming answer + sources.
 """
 
 import asyncio
-from typing import List, AsyncGenerator
+from typing import List, AsyncGenerator, Optional, Any
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.documents import Document
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 
 _store: dict[str, ChatMessageHistory] = {}
@@ -68,35 +69,62 @@ async def rag_stream(
     question: str,
     session_id: str,
     executor=None,
+    human_content: Any = None,
+    history_user_text: Optional[str] = None,
+    retrieval_query: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
+    """
+    human_content: optional multimodal list for vision; otherwise `question` is used.
+    history_user_text: compact label for memory (attachments).
+    retrieval_query: text used for the knowledge-base search (defaults to `question`).
+    """
     history = get_session_history(session_id)
     chat_history = list(history.messages)
 
+    retrieve_q = (retrieval_query or question or "").strip()
+    if len(retrieve_q) > 2000:
+        retrieve_q = retrieve_q[:2000]
+
     yield "\x00STATUS\x00searching"
-    docs = await asyncio.to_thread(retriever.invoke, question)
+    docs = await asyncio.to_thread(retriever.invoke, retrieve_q)
     yield "\x00STATUS\x00done|" + str(len(docs))
     context = _format_docs(docs)
 
-    qa_prompt = ChatPromptTemplate.from_messages([
-        (
-            "system",
+    if isinstance(human_content, list):
+        system = (
             "/no_think\n"
             "You are an assistant for question-answering tasks. (Answer in Persian)\n"
             "Use the following retrieved context to answer the question.\n"
             "If you don't know the answer, say so honestly.\n"
             "Keep the answer concise.\n\n"
-            "Context:\n{context}\n"
-            "/no_think",
-        ),
-        MessagesPlaceholder("chat_history"),
-        ("human", "{input}"),
-    ])
-
-    messages = qa_prompt.format_messages(
-        context=context,
-        chat_history=chat_history,
-        input=question,
-    )
+            f"Context:\n{context}\n"
+            "/no_think"
+        )
+        messages = (
+            [SystemMessage(content=system)]
+            + list(chat_history)
+            + [HumanMessage(content=human_content)]
+        )
+    else:
+        qa_prompt = ChatPromptTemplate.from_messages([
+            (
+                "system",
+                "/no_think\n"
+                "You are an assistant for question-answering tasks. (Answer in Persian)\n"
+                "Use the following retrieved context to answer the question.\n"
+                "If you don't know the answer, say so honestly.\n"
+                "Keep the answer concise.\n\n"
+                "Context:\n{context}\n"
+                "/no_think",
+            ),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ])
+        messages = qa_prompt.format_messages(
+            context=context,
+            chat_history=chat_history,
+            input=human_content if isinstance(human_content, str) else question,
+        )
 
     full_response = ""
     async for chunk in llm.astream(messages):
@@ -106,7 +134,10 @@ async def rag_stream(
             yield token
 
     if full_response:
-        history.add_user_message(question)
+        mem_user = history_user_text if history_user_text is not None else question
+        if len(mem_user) > 1500:
+            mem_user = mem_user[:1500] + "…"
+        history.add_user_message(mem_user)
         history.add_ai_message(full_response)
 
     yield "\x00SOURCES\x00" + str([

@@ -390,6 +390,7 @@
   async function initFromConfig() {
     let cfg = null;
     try { cfg = await apiGet("/config"); } catch {}
+    applyUploadLimits(cfg);
     applyStoredSettings(cfg);
     await loadModels();
   }

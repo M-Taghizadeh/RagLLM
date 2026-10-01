@@ -6,6 +6,7 @@ Loaded on demand (Lazy).
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 from typing import List, Tuple
 
@@ -21,7 +22,8 @@ _DEFAULT_PATH = os.path.abspath(
 )
 MODEL_PATH = os.environ.get("RERANKER_MODEL_PATH", _DEFAULT_PATH)
 USE_RERANKER = os.environ.get("USE_RERANKER", "1").strip() not in ("0", "false", "False")
-RERANK_CANDIDATES = int(os.environ.get("RERANK_CANDIDATES", "20"))
+RERANK_POOL_CAP = max(1, int(os.environ.get("RERANK_POOL_CAP", "32")))
+RERANK_CANDIDATES = min(int(os.environ.get("RERANK_CANDIDATES", "20")), RERANK_POOL_CAP)
 RERANK_MIN_SCORE = float(os.environ.get("RERANK_MIN_SCORE", "-100"))
 
 
@@ -29,6 +31,8 @@ class BGEReranker:
     """Local BGE-reranker-v2-m3 wrapper using native transformers."""
 
     _instance: BGEReranker | None = None
+    _lock = threading.Lock()
+    _infer_lock = threading.Lock()
 
     def __init__(self, model_path: str = MODEL_PATH):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -53,7 +57,9 @@ class BGEReranker:
     @classmethod
     def get_instance(cls, model_path: str = MODEL_PATH) -> BGEReranker:
         if cls._instance is None:
-            cls._instance = cls(model_path)
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls(model_path)
         return cls._instance
 
     def score(self, query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
@@ -62,8 +68,9 @@ class BGEReranker:
 
         pairs = [[query, d.page_content] for d in docs]
 
-        try:
-            with torch.inference_mode():
+        # HF fast tokenizers are not thread-safe ("Already borrowed"); serialize inference.
+        with self._infer_lock, torch.inference_mode():
+            try:
                 inputs = self.tokenizer(
                     pairs,
                     padding=True,
@@ -76,9 +83,9 @@ class BGEReranker:
                 scores_list = scores.cpu().tolist()
                 if isinstance(scores_list, float):
                     scores_list = [scores_list]
-        finally:
-            if self.device == "cuda":
-                torch.cuda.empty_cache()
+            finally:
+                if self.device == "cuda":
+                    torch.cuda.empty_cache()
 
         return list(zip(docs, [float(s) for s in scores_list]))
 

@@ -3,7 +3,10 @@ RagBot - FastAPI Backend
 RESTful API with SSE streaming for all modules + JWT auth + PostgreSQL
 """
 
+import asyncio
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -26,6 +29,16 @@ MultiPartParser.max_part_size = 500 * 1024 * 1024
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # استخر نخ پیش‌فرض asyncio.to_thread (پیش‌فرض: cpu+4) — زیر بار هم‌زمان پر نشود.
+    # بیشتر کارها I/O-bound هستند (انتظار برای مدل/دیسک) پس چند برابر هسته‌ها.
+    from services.memory import cpu_count
+    asyncio.get_running_loop().set_default_executor(
+        ThreadPoolExecutor(
+            max_workers=min(128, max(32, cpu_count() * 4)),
+            thread_name_prefix="ragbot-worker",
+        )
+    )
+
     # ۱. اتصال به پایگاه داده PostgreSQL
     from services.database import init_db as pg_init
     await pg_init()
@@ -39,7 +52,28 @@ async def lifespan(app: FastAPI):
     await ensure_admin_exists()
 
     print("[startup] Backend initialized successfully without startup deadlocks.", flush=True)
+
+    # ۴. گرم کردن مدل‌ها در پس‌زمینه — startup را بلاک نمی‌کند؛ اگر درخواستی زودتر برسد
+    # روی همان قفل get_instance منتظر می‌ماند و مدل دوبار لود نمی‌شود.
+    threading.Thread(target=_warmup_models, name="model-warmup", daemon=True).start()
     yield
+
+
+def _warmup_models() -> None:
+    import time
+    t0 = time.time()
+    try:
+        from langchain_core.documents import Document
+        from services.embeddings import BGEEmbeddings
+        from services.reranker import get_reranker_safe
+
+        BGEEmbeddings.get_instance().embed_query("warmup")
+        reranker = get_reranker_safe()
+        if reranker is not None:
+            reranker.score("warmup", [Document(page_content="warmup")])
+        print(f"[startup] Models warmed up in {time.time() - t0:.1f}s", flush=True)
+    except Exception as ex:
+        print(f"[startup] Model warmup skipped: {ex}", flush=True)
 
 
 app = FastAPI(
@@ -72,7 +106,15 @@ def health():
 
 @app.get("/api/config")
 def get_config():
+    from routers.rag import MAX_UPLOAD_MB
+    from services.attachments import MAX_ATTACHMENTS, MAX_DOC_BYTES, MAX_IMAGE_BYTES
     return {
+        "upload_limits": {
+            "kb_file_mb": MAX_UPLOAD_MB,
+            "chat_doc_mb": MAX_DOC_BYTES // (1024 * 1024),
+            "chat_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
+            "chat_max_files": MAX_ATTACHMENTS,
+        },
         "default_model": DEFAULT_MODEL,
         "ollama_url": DEFAULT_OLLAMA_URL,
         "default_top_k": DEFAULT_TOP_K,

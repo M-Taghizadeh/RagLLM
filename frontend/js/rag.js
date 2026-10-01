@@ -17,6 +17,15 @@
   const input$         = document.getElementById("ragInput");
   const send$          = document.getElementById("ragSend");
   const clear$         = document.getElementById("clearRag");
+  const ragAttachBtn$  = document.getElementById("ragAttachBtn");
+  const ragAttachInput$ = document.getElementById("ragAttachInput");
+  const ragAttachPreview$ = document.getElementById("ragAttachPreview");
+  const chatAttachments = createAttachController({
+    input$: ragAttachInput$,
+    preview$: ragAttachPreview$,
+    dropZone$: document.getElementById("ragComposer"),
+  });
+  ragAttachBtn$?.addEventListener("click", () => ragAttachInput$?.click());
   const pdfDrop$       = document.getElementById("pdfDrop");
   const pdfInput$      = document.getElementById("pdfInput");
   const fileList$      = document.getElementById("pdfFileList");
@@ -187,7 +196,7 @@
 
   const stopChat$ = document.createElement("button");
   stopChat$.className = "btn-stop";
-  stopChat$.textContent = "⏹ توقف";
+  stopChat$.textContent = "توقف";
   stopChat$.style.display = "none";
   send$.parentNode.insertBefore(stopChat$, send$.nextSibling);
 
@@ -270,7 +279,7 @@
   pdfInput$.addEventListener("change", () => { addFiles([...pdfInput$.files]); pdfInput$.value = ""; });
 
   function addFiles(files) {
-    files.forEach(f => {
+    filterKbFilesBySize(files.filter(isAllowed)).forEach(f => {
       if (isAllowed(f) && !selectedFiles.find(x => x.name === f.name))
         selectedFiles.push(f);
     });
@@ -591,7 +600,7 @@
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble";
     if (role === "user") {
-      bubble.textContent = text;
+      renderUserContent(bubble, text);
     } else {
       bubble.innerHTML = text ? renderMarkdown(text) : "";
     }
@@ -626,12 +635,14 @@
 
   function sendMessage() {
     const text = input$.value.trim();
-    if (!text || isStreaming) return;
+    const files = chatAttachments.getFiles();
+    if ((!text && !files.length) || isStreaming) return;
 
     const collection = collectionIn$.value.trim() || "default_pdf";
-    appendMessage("user", text);
+    appendUserBubble(chatWindow$, text, files);
     input$.value = "";
     input$.style.height = "auto";
+    chatAttachments.clear();
 
     const settings = getSettings();
     const { wrap, bubble } = appendMessage("assistant", "");
@@ -645,18 +656,41 @@
     let statusBubble = null;
     let rawText = "";
 
-    fetch(`${API_BASE}/rag/chat/stream`, {
-      method:  "POST",
-      headers: _authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({
-        message: text, collection, session_id: sessionId,
-        ...llmRequestFields(settings),
-      }),
-      signal: chatAbort.signal,
-    })
+    const fields = {
+      message: text,
+      collection,
+      session_id: sessionId,
+      ...llmRequestFields(settings),
+    };
+
+    let fetchOpts;
+    if (files.length) {
+      // Do NOT set Content-Type — browser sets multipart boundary
+      fetchOpts = {
+        method: "POST",
+        headers: _authHeaders(),
+        body: buildChatFormData(fields, files),
+        signal: chatAbort.signal,
+      };
+    } else {
+      fetchOpts = {
+        method: "POST",
+        headers: _authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(fields),
+        signal: chatAbort.signal,
+      };
+    }
+
+    fetch(`${API_BASE}/rag/chat/stream`, fetchOpts)
     .then(res => {
       if (res.status === 401) { _handle401(); return; }
-      if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
+      if (!res.ok) return res.json().then(e => {
+        const detail = e.detail;
+        const msg = typeof detail === "string" ? detail
+          : Array.isArray(detail) ? detail.map(d => d.msg || d).join(" ")
+          : (res.statusText || "خطا");
+        throw new Error(msg);
+      });
 
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
@@ -673,9 +707,11 @@
             try {
               const p = JSON.parse(line.slice(5).trim());
               if (p.error)   { bubble.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(p.error)}</span>`; finalize(); return; }
-              if (p.status === "retrieving")     { statusBubble = createStatusBubble(chatWindow$, p.msg); }
+              if (p.status === "retrieving" || p.status === "searching") {
+                if (statusBubble) updateStatusBubble(statusBubble, p.msg);
+                else statusBubble = createStatusBubble(chatWindow$, p.msg);
+              }
               if (p.status === "retrieval_done") { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
-              if (p.status === "searching")      { statusBubble = createStatusBubble(chatWindow$, p.msg); }
               if (p.status === "search_done")    { updateStatusBubble(statusBubble, p.msg, true); statusBubble = null; }
               if (p.token)   { rawText += p.token; bubble.innerHTML = renderMarkdown(rawText); chatWindow$.scrollTop = chatWindow$.scrollHeight; }
               if (p.sources)     { sourcesData = p.sources; }
@@ -699,6 +735,8 @@
     });
 
     function finalize() {
+      if (statusBubble && statusBubble.parentNode) statusBubble.parentNode.removeChild(statusBubble);
+      statusBubble = null;
       bubble.classList.remove("typing-cursor");
       if (sourcesData) appendSources(wrap, sourcesData);
       isStreaming = false;
@@ -722,6 +760,7 @@
     stopChat();
     const prev = sessionId;
     chatWindow$.innerHTML = "";
+    chatAttachments.clear();
     sessionId = newSessionId("rag");
     try { await apiPost(`/rag/clear?session_id=${encodeURIComponent(prev)}`); } catch {}
     setStatus(status$, "گفتگوی جدید شروع شد.", "ok");
